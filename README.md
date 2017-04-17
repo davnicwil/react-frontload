@@ -10,7 +10,7 @@ It integrates easily into your existing React stack, and importantly, requires n
 
 Here I'll just get straight to the API reference. 
 
-For a detailed description of the library and API, including sample code, [see this blog post](https://medium.com/@davnicwil/react-frontload).
+For a detailed description of the library and API, including sample code, [see this blog post](https://medium.com/@davnicwil/react-frontload-3ff68988cca).
 
 `frontloadConnect(frontload, [options])(Component)`
 
