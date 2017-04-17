@@ -44,7 +44,7 @@ The react-frontload provider Component - it must be an ancestor of all Component
 
 It is configurable with a `noServerRender` prop which turns off server rendering for the entire application, as a convenience so that each individual Component does not need to set `noServerRender: true`.
 
-`serverRender(renderFunction)`
+`frontloadServerRender(renderFunction)`
 
 The react-frontload server render wrapper which must be used on the server. 
 
