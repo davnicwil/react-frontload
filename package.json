@@ -10,6 +10,19 @@
   },
   "author": "davnicwil",
   "license": "MIT",
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/davnicwil/react-frontload"
+  },
+  "keywords": [
+    "react",
+    "load",
+    "data",
+    "async",
+    "bind",
+    "server",
+    "server render"
+  ],
   "standard": {
     "parser": "babel-eslint",
     "globals": [
