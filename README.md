@@ -40,11 +40,15 @@ Toggles whether or not the frontload function should fire when the Component mou
 
 Toggles whether or not the frontload function should fire when the Component’s props update on the client.
 
+___
+
 `Frontload`
 
 The react-frontload provider Component - it must be an ancestor of all Components in the tree that use frontloadConnect.
 
 It is configurable with a `noServerRender` prop which turns off server rendering for the entire application, as a convenience so that each individual Component does not need to set `noServerRender: true`.
+
+___
 
 `frontloadServerRender(renderFunction)`
 
