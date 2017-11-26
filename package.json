@@ -31,10 +31,6 @@
       "beforeEach"
     ]
   },
-  "engines": {
-    "node": ">=6.x",
-    "npm": "3.x"
-  },
   "dependencies": {
     "prop-types": "^15.6.0"
   },
