@@ -31,6 +31,9 @@
       "beforeEach"
     ]
   },
+  "dependencies": {
+    "prop-types": "^15.6.0"
+  },
   "devDependencies": {
     "babel": "^6.23.0",
     "babel-cli": "^6.23.0",
@@ -52,6 +55,6 @@
     "standard": "^9.0.0"
   },
   "peerDependencies": {
-    "react": "^0.14.0 || ^15.0.0"
+    "react": "^0.14.0 || ^15.0.0 || ^16.0.0"
   }
 }

@@ -1,4 +1,5 @@
-import React from 'react'
+import React from 'react';
+import PropTypes from 'prop-types';
 
 let FRONTLOAD_QUEUES = []
 
@@ -67,7 +68,7 @@ function flushQueues (index, options = {}) {
 
 export class Frontload extends React.Component {
   static childContextTypes = {
-    frontload: React.PropTypes.object
+    frontload: PropTypes.object
   }
 
   getChildContext () {
@@ -171,7 +172,7 @@ export class Frontload extends React.Component {
 
 class FrontloadConnectedComponent extends React.Component {
   static contextTypes = {
-    frontload: React.PropTypes.object
+    frontload: PropTypes.object
   }
 
   constructor (props, context) {
