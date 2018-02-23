@@ -1,5 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from 'react'
+import PropTypes from 'prop-types'
 
 let FRONTLOAD_QUEUES = []
 
@@ -33,7 +33,7 @@ const map = (arr, fn) => {
   return mapped
 }
 
-// util with same behaviour of Promise.all, except it does not short-cirucit
+// util with same behaviour of Promise.all, except it does not short-circuit
 // to catch if one of the promises rejects. It resolves when all the passed promises
 // have either resolved or rejected
 const waitForAllToComplete = (promises) => (
@@ -75,33 +75,50 @@ export class Frontload extends React.Component {
     return {
       frontload: {
         isServer: this.isServer,
-        pushFrontload: (frontload, options, lifecylePhase, childProps, log) => {
+        firstClientRenderDone: this.isServer
+          ? true
+          : this.firstClientRenderDone,
+        // this does the work of either executing the frontload function on the client,
+        // or pushing it to the queue for eventual execution on the server
+        pushFrontload: (frontload, options, lifecylePhase, childProps, logMessage) => {
           const isMount = lifecylePhase === LIFECYCLE_PHASES.MOUNT
           const isUpdate = lifecylePhase === LIFECYCLE_PHASES.UPDATE
-
           const queue = FRONTLOAD_QUEUES[this.queueIndex]
+          const noServerRender = this.props.noServerRender || options.noServerRender
 
-          // > if on server, and noServerRender is configured globally or locally for this frontload, don't push to the queue
-          // > if the frontload is configured not to run for this lifecycle phase, don't push to the queue
+          // if on server, and noServerRender is configured globally or locally
+          // or if the frontload is configured not to run for this lifecycle phase
+          // just do nothing
           if (
-            (this.isServer && (this.props.noServerRender || options.noServerRender)) ||
-            (isMount && options.onMount === false) ||
-            (isUpdate && options.onUpdate === false) ||
-            (isUpdate && !queue.isInUpdateCycle)
+            (this.isServer && noServerRender) ||
+            (isMount && options.onMount === false) || // onMount default true
+            (isUpdate && !options.onUpdate) // onUpdate default false
           ) {
             return
           }
 
-          log && log()
+          // if on server -> add frontload to a queue for eventual execution
+          if (this.isServer) {
+            queue.unshift({
+              fn: () => frontload(childProps, { isMount, isUpdate }),
+              options,
+              componentDisplayName: childProps.displayName
+            })
 
-          queue.unshift({
-            fn: () => frontload(childProps, { isMount, isUpdate }),
-            options,
-            componentDisplayName: childProps.displayName
-          })
-        },
-        log: (message) => {
-          this.props.withLogging && log(this.props.name, message)
+            if (process.env.NODE_ENV !== 'production' && this.props.withLogging && logMessage) {
+              log(this.props.name, `added frontload fn to queue ${logMessage}`)
+            }
+          // if on client -> just execute it immediately, but only after first client render is done if server rendering is enabled
+          } else if (noServerRender || this.firstClientRenderDone) {
+            frontload(childProps, { isMount, isUpdate })
+
+            if (process.env.NODE_ENV !== 'production' && this.props.withLogging && logMessage) {
+              log(this.props.name, `executed frontload fn ${logMessage}`)
+            }
+          // log when frontload is not run on client first render because of server rendering
+          } else if (process.env.NODE_ENV !== 'production' && this.props.withLogging && logMessage) {
+            log(this.props.name, `did not execute frontload fn on first client render ${logMessage}, since server rendering is enabled`)
+          }
         }
       }
     }
@@ -116,51 +133,20 @@ export class Frontload extends React.Component {
 
     this.queueIndex = FRONTLOAD_QUEUES.push([]) - 1
 
-    if (!this.isServer) {
-      this.componentWillUpdate = () => {
-        FRONTLOAD_QUEUES[this.queueIndex].isInUpdateCycle = true
+    // hook for first ever render on client
+    // by default, no frontloads are run on first render, because it is assumed that server rendering is being used
+    // to run all frontloads and fetch data on the server, such that fresh data is available for this first client
+    // render. However, this setup may not be appropriate for every app. We may want to rerun the frontload
+    // functions on the first render on the client for certain, or all, components, for example if server
+    // rendering is not set up at all, or if data may be stale at the time of first client render due to
+    // server-side caching. There are 2 options to configure rerunning the frontload fn(s)
+    // on first render - in a per-frontload option { noServerRender: true }, or in a prop on this
+    // Frontload provider: { noServerRender: true }, which of course enables this for all frontload fns
+    this.componentDidMount = () => {
+      this.firstClientRenderDone = true
 
-        if (process.env.NODE_ENV !== 'production' && props.withLogging) {
-          log(props.name, 'rendering subtree components. Filling frontload fn queue')
-        }
-      }
-
-      // hook for first ever render on client (all subsequent renders are handled by componentDidUpdate)
-      // by default, no frontloads are run on first render, because it is assumed that server rendering is being used
-      // to run all frontloads and fetch data on the server, such that fresh data is available for this first client
-      // render. However, this setup may not be appropriate for every app. We may want to rerun the frontload
-      // functions on the first render on the client for certain, or all, components, for example if server
-      // rendering is not set up at all, or if data may be stale at the time of first client render due to
-      // server-side caching. There are 2 options to configure rerunning the frontload fn(s)
-      // on first render - in a per-frontload option { noServerRender: true }, or in a prop on this
-      // Frontload provider: { noServerRender: true }, which of course enables this for all frontload fns
-      this.componentDidMount = () => {
-        if (process.env.NODE_ENV !== 'production' && props.withLogging) {
-          log(props.name, '[1st client render] all subtree components have rendered. Flushing frontload fn queue')
-        }
-
-        flushQueues(this.queueIndex, {
-          noServerRender: props.noServerRender,
-          firstClientRender: true,
-          log: props.withLogging && ((message) => log(props.name, message))
-        })
-
-        if (process.env.NODE_ENV !== 'production' && props.withLogging) {
-          log(props.name, '[1st client render] flushed frontload fn queue')
-        }
-      }
-
-      this.componentDidUpdate = () => {
-        FRONTLOAD_QUEUES[this.queueIndex].isInUpdateCycle = false
-        if (process.env.NODE_ENV !== 'production' && props.withLogging) {
-          log(props.name, 'all subtree components have rendered. Flushing frontload fn queue')
-        }
-
-        flushQueues(this.queueIndex)
-
-        if (process.env.NODE_ENV !== 'production' && props.withLogging) {
-          log(props.name, 'flushed frontload fn queue')
-        }
+      if (process.env.NODE_ENV !== 'production' && props.withLogging && !props.noServerRender) {
+        log(props.name, '1st client render done, from now on all frontloads will run')
       }
     }
   }
@@ -179,19 +165,19 @@ class FrontloadConnectedComponent extends React.Component {
     super(props, context)
 
     if (context.frontload.isServer) {
-      this.componentWillMount = this.pushFrontload(LIFECYCLE_PHASES.MOUNT)
+      this.componentWillMount = this.pushFrontload(LIFECYCLE_PHASES.MOUNT, true)
     } else {
       this.componentDidMount = this.pushFrontload(LIFECYCLE_PHASES.MOUNT)
       this.componentDidUpdate = this.pushFrontload(LIFECYCLE_PHASES.UPDATE)
     }
   }
 
-  pushFrontload = (lifecyclePhase) => () => {
-    const log = (process.env.NODE_ENV !== 'production') && (() => {
-      this.context.frontload.log(`add frontload fn to queue for component: [${this.props.component.displayName || 'anonymous'}]`)
-    })
+  pushFrontload = (lifecyclePhase, isServer) => () => {
+    const logMessage = (process.env.NODE_ENV !== 'production')
+      ? null
+      : `for component: [${this.props.component.displayName || 'anonymous'}] on [${(lifecyclePhase === LIFECYCLE_PHASES.MOUNT) ? 'mount' : 'update'}]`
 
-    this.context.frontload.pushFrontload(this.props.frontload, this.props.options, lifecyclePhase, this.props.componentProps, log)
+    this.context.frontload.pushFrontload(this.props.frontload, this.props.options, lifecyclePhase, this.props.componentProps, logMessage)
   }
 
   render () {

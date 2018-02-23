@@ -95,19 +95,19 @@ const frontloads = {
   )
 }
 
-const Component1 = frontloadConnect(frontloads.component1)((props) => (
+const Component1 = frontloadConnect(frontloads.component1, { onMount: true, onUpdate: true })((props) => (
   <Parent value={props.store.a[props.entityId]}>
     {props.children}
   </Parent>
 ))
 
-const Component2 = frontloadConnect(frontloads.component2)((props) => (
+const Component2 = frontloadConnect(frontloads.component2, { onMount: true, onUpdate: true })((props) => (
   <Parent value={props.store.b[props.entityId]}>
     {props.children}
   </Parent>
 ))
 
-const Component3 = frontloadConnect(frontloads.component3)((props) => (
+const Component3 = frontloadConnect(frontloads.component3, { onMount: true, onUpdate: true })((props) => (
   <Leaf value={props.store.c[props.entityId]} />
 ))
 
