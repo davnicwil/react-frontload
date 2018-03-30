@@ -1,5 +1,7 @@
 # react-frontload
 
+[See this blog post] for a detailed description of the library and API, including sample code(https://medium.com/@davnicwil/react-frontload-3ff68988cca).
+
 In React applications, a common requirement is to render data which is dynamically loaded from an API into a component, on both server and client renders.
 
 react-frontload is a library that lets you declaratively bind custom data loading logic to your components, and then automatically fires the data loading when the component renders on both server and client. 
@@ -8,15 +10,9 @@ It integrates easily into your existing React stack, and importantly, requires n
 
 ### API
 
-Here I'll just get straight to the API reference. 
-
-For a detailed description of the library and API, including sample code, [see this blog post](https://medium.com/@davnicwil/react-frontload-3ff68988cca).
-
-___
-
 `frontloadConnect(frontload, [options])(Component)`
 
-`frontloadConnect` is the bridge between react-frontload and the Component you want to load data into.
+`frontloadConnect` is a HOC which connects react-frontload and the Component you want to load data into.
 
 The frontload and options parameters:
 
@@ -52,9 +48,9 @@ ___
 
 `frontloadServerRender(renderFunction)`
 
-The react-frontload server render wrapper which must be used on the server. 
+The react-frontload server render wrapper which must be used on the server.
 
-It takes a `renderFunction` argument which is itself a funcion that performs the ordinary React server rendering code and returns markup. In most cases this renderFunction will just be a wrapper for a `ReactDom.renderTostring` call.
+It takes a `renderFunction` argument which is itself a function that performs the ordinary React server rendering code and returns markup. In most cases this `renderFunction` will just be a wrapper for a `ReactDom.renderToString` call.
 
 It returns the markup output by `renderFunction`, which can be sent as a response in the usual way.
 
