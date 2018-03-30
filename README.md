@@ -1,6 +1,6 @@
 # react-frontload
 
-[See this blog post] for a detailed description of the library and API, including sample code(https://medium.com/@davnicwil/react-frontload-3ff68988cca).
+[See this blog post](https://medium.com/@davnicwil/react-frontload-3ff68988cca) for a detailed description of the library and API, including sample code.
 
 In React applications, a common requirement is to render data which is dynamically loaded from an API into a component, on both server and client renders.
 
