@@ -1,13 +1,11 @@
-import React from 'react';
+import React from "react";
 import {
   frontloadServerRender,
   frontloadConnect,
   Frontload
-} from '../src/index';
-import { mount, render } from 'enzyme';
-import sinon from 'sinon';
-
-require('es6-promise/auto');
+} from "../src/index";
+import { mount, render } from "enzyme";
+import sinon from "sinon";
 
 const mockApiCall = ({ value, delay, fail }) => {
   const promise = new Promise((resolve, reject) => {
@@ -19,6 +17,7 @@ const mockApiCall = ({ value, delay, fail }) => {
       }
     }, delay || 0);
   });
+
   MOCK_API_PROMISES.push(promise);
 
   return promise;
@@ -67,7 +66,7 @@ beforeEach(() => {
 });
 
 const Leaf = props => (
-  <div className="leaf">{props.value ? props.value.data : 'loading...'}</div>
+  <div className="leaf">{props.value ? props.value.data : "loading..."}</div>
 );
 
 const Parent = props => (
@@ -84,7 +83,7 @@ const addEntityToStore = (store, type) => entity => {
 };
 
 const addEntityFailedToLoadToStore = (store, type, entityId) => () => {
-  store[type][entityId] = { data: 'failed to load...' };
+  store[type][entityId] = { data: "failed to load..." };
 };
 
 const buildCleanStore = () => ({ a: {}, b: {}, c: {} });
@@ -92,16 +91,16 @@ const buildCleanStore = () => ({ a: {}, b: {}, c: {} });
 const frontloads = {
   component1: props =>
     MockApi.getA(props.entityId, props.mockRestrictedEntity)
-      .then(addEntityToStore(props.store, 'a'))
-      .catch(addEntityFailedToLoadToStore(props.store, 'a', props.entityId)),
+      .then(addEntityToStore(props.store, "a"))
+      .catch(addEntityFailedToLoadToStore(props.store, "a", props.entityId)),
   component2: props =>
     MockApi.getB(props.entityId, props.mockRestrictedEntity)
-      .then(addEntityToStore(props.store, 'b'))
-      .catch(addEntityFailedToLoadToStore(props.store, 'b', props.entityId)),
+      .then(addEntityToStore(props.store, "b"))
+      .catch(addEntityFailedToLoadToStore(props.store, "b", props.entityId)),
   component3: props =>
     MockApi.getC(props.entityId, props.mockRestrictedEntity)
-      .then(addEntityToStore(props.store, 'c'))
-      .catch(addEntityFailedToLoadToStore(props.store, 'c', props.entityId))
+      .then(addEntityToStore(props.store, "c"))
+      .catch(addEntityFailedToLoadToStore(props.store, "c", props.entityId))
 };
 
 const Component1 = frontloadConnect(frontloads.component1, {
@@ -149,8 +148,8 @@ const assertDomStructureIsAsExpected = rendered => {
 };
 
 const assertServerRenderedMarkupStructureIsAsExpected = rendered => {
-  expect(rendered.find('div.parent')).toHaveLength(1);
-  expect(rendered.find('div.leaf')).toHaveLength(4);
+  expect(rendered.find("div.parent")).toHaveLength(1);
+  expect(rendered.find("div.leaf")).toHaveLength(4);
 };
 
 const assertLoadersAreRendered = rendered => {
@@ -159,73 +158,74 @@ const assertLoadersAreRendered = rendered => {
       .find(Leaf)
       .at(0)
       .text()
-  ).toBe('loading...');
+  ).toBe("loading...");
   expect(
     rendered
       .find(Leaf)
       .at(1)
       .text()
-  ).toBe('loading...');
+  ).toBe("loading...");
   expect(
     rendered
       .find(Leaf)
       .at(2)
       .text()
-  ).toBe('loading...');
+  ).toBe("loading...");
   expect(
     rendered
       .find(Leaf)
       .at(3)
       .text()
-  ).toBe('loading...');
+  ).toBe("loading...");
 };
 
 const assertLoadersAreRenderedOnServer = serverRenderedMarkup => {
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(0)
       .text()
-  ).toBe('loading...');
+  ).toBe("loading...");
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(1)
       .text()
-  ).toBe('loading...');
+  ).toBe("loading...");
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(2)
       .text()
-  ).toBe('loading...');
+  ).toBe("loading...");
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(3)
       .text()
-  ).toBe('loading...');
+  ).toBe("loading...");
 };
 
 const assertStoreIsPopulated = store => {
-  expect(store.a['1']).toEqual({ id: '1', data: 'a 1' });
-  expect(store.b['3']).toEqual({ id: '3', data: 'b 3' });
-  expect(store.c['2']).toEqual({ id: '2', data: 'c 2' });
-  expect(store.c['4']).toEqual({ id: '4', data: 'c 4' });
+  console.log("STORE", store);
+  expect(store.a["1"]).toEqual({ id: "1", data: "a 1" });
+  expect(store.b["3"]).toEqual({ id: "3", data: "b 3" });
+  expect(store.c["2"]).toEqual({ id: "2", data: "c 2" });
+  expect(store.c["4"]).toEqual({ id: "4", data: "c 4" });
 };
 
 const assertStoreIsEmpty = store => {
-  expect(store.a['1']).toBeUndefined();
-  expect(store.b['3']).toBeUndefined();
-  expect(store.c['2']).toBeUndefined();
-  expect(store.c['4']).toBeUndefined();
+  expect(store.a["1"]).toBeUndefined();
+  expect(store.b["3"]).toBeUndefined();
+  expect(store.c["2"]).toBeUndefined();
+  expect(store.c["4"]).toBeUndefined();
 };
 
 const assertStoreIsPopulatedIncludingFailures = store => {
-  expect(store.a['1']).toEqual({ id: '1', data: 'a 1' });
-  expect(store.b['3']).toEqual({ data: 'failed to load...' });
-  expect(store.c['2']).toEqual({ data: 'failed to load...' });
-  expect(store.c['4']).toEqual({ id: '4', data: 'c 4' });
+  expect(store.a["1"]).toEqual({ id: "1", data: "a 1" });
+  expect(store.b["3"]).toEqual({ data: "failed to load..." });
+  expect(store.c["2"]).toEqual({ data: "failed to load..." });
+  expect(store.c["4"]).toEqual({ id: "4", data: "c 4" });
 };
 
 const assertDataFromStoreIsRendered = rendered => {
@@ -234,52 +234,52 @@ const assertDataFromStoreIsRendered = rendered => {
       .find(Leaf)
       .at(0)
       .text()
-  ).toBe('a 1');
+  ).toBe("a 1");
   expect(
     rendered
       .find(Leaf)
       .at(1)
       .text()
-  ).toBe('c 2');
+  ).toBe("c 2");
   expect(
     rendered
       .find(Leaf)
       .at(2)
       .text()
-  ).toBe('b 3');
+  ).toBe("b 3");
   expect(
     rendered
       .find(Leaf)
       .at(3)
       .text()
-  ).toBe('c 4');
+  ).toBe("c 4");
 };
 
 const assertDataFromStoreIsRenderedOnServer = serverRenderedMarkup => {
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(0)
       .text()
-  ).toBe('a 1');
+  ).toBe("a 1");
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(1)
       .text()
-  ).toBe('c 2');
+  ).toBe("c 2");
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(2)
       .text()
-  ).toBe('b 3');
+  ).toBe("b 3");
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(3)
       .text()
-  ).toBe('c 4');
+  ).toBe("c 4");
 };
 
 const assertDataFromStoreIsRenderedIncludingFailures = rendered => {
@@ -288,55 +288,55 @@ const assertDataFromStoreIsRenderedIncludingFailures = rendered => {
       .find(Leaf)
       .at(0)
       .text()
-  ).toBe('a 1');
+  ).toBe("a 1");
   expect(
     rendered
       .find(Leaf)
       .at(1)
       .text()
-  ).toBe('failed to load...');
+  ).toBe("failed to load...");
   expect(
     rendered
       .find(Leaf)
       .at(2)
       .text()
-  ).toBe('failed to load...');
+  ).toBe("failed to load...");
   expect(
     rendered
       .find(Leaf)
       .at(3)
       .text()
-  ).toBe('c 4');
+  ).toBe("c 4");
 };
 
 const assertDataFromStoreIsRenderedOnServerIncludingFailures = serverRenderedMarkup => {
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(0)
       .text()
-  ).toBe('a 1');
+  ).toBe("a 1");
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(1)
       .text()
-  ).toBe('failed to load...');
+  ).toBe("failed to load...");
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(2)
       .text()
-  ).toBe('failed to load...');
+  ).toBe("failed to load...");
   expect(
     serverRenderedMarkup
-      .find('div.leaf')
+      .find("div.leaf")
       .eq(3)
       .text()
-  ).toBe('c 4');
+  ).toBe("c 4");
 };
 
-test('v0.0.1: Client render of <App /> with all mock api call promises resolved', () => {
+test("v0.0.1: Client render of <App /> with all mock api call promises resolved", () => {
   const store = buildCleanStore();
 
   const App = () => (
@@ -380,7 +380,7 @@ test('v0.0.1: Client render of <App /> with all mock api call promises resolved'
   });
 });
 
-test('v0.0.1: Client render of <App /> with 2 mock api call promises resolved and 2 rejected', () => {
+test("v0.0.1: Client render of <App /> with 2 mock api call promises resolved and 2 rejected", () => {
   const store = buildCleanStore();
 
   const App = () => (
@@ -419,7 +419,7 @@ test('v0.0.1: Client render of <App /> with 2 mock api call promises resolved an
   });
 });
 
-test('v0.0.1: Client render of <App /> with server rendering configured off globally', () => {
+test("v0.0.1: Client render of <App /> with server rendering configured off globally", () => {
   const store = buildCleanStore();
 
   const App = () => (
@@ -452,7 +452,7 @@ test('v0.0.1: Client render of <App /> with server rendering configured off glob
   });
 });
 
-test('v0.0.1: Client render of <App /> with server rendering configured off for one component', () => {
+test("v0.0.1: Client render of <App /> with server rendering configured off for one component", () => {
   const store = buildCleanStore();
 
   const App = () => (
@@ -498,10 +498,10 @@ test('v0.0.1: Client render of <App /> with server rendering configured off for 
         expect(secondRender.find(Leaf)).toHaveLength(4);
 
         // assert store is only populated in the store for Component3WithNoServerRender
-        expect(store.a['1']).toBeUndefined();
-        expect(store.b['3']).toBeUndefined();
-        expect(store.c['2']).toBeUndefined();
-        expect(store.c['4']).toEqual({ id: '4', data: 'c 4' });
+        expect(store.a["1"]).toBeUndefined();
+        expect(store.b["3"]).toBeUndefined();
+        expect(store.c["2"]).toBeUndefined();
+        expect(store.c["4"]).toEqual({ id: "4", data: "c 4" });
 
         // assert data is only rendered for Component3WithNoServerRender
         expect(
@@ -509,25 +509,25 @@ test('v0.0.1: Client render of <App /> with server rendering configured off for 
             .find(Leaf)
             .at(0)
             .text()
-        ).toBe('loading...');
+        ).toBe("loading...");
         expect(
           secondRender
             .find(Leaf)
             .at(1)
             .text()
-        ).toBe('loading...');
+        ).toBe("loading...");
         expect(
           secondRender
             .find(Leaf)
             .at(2)
             .text()
-        ).toBe('loading...');
+        ).toBe("loading...");
         expect(
           secondRender
             .find(Leaf)
             .at(3)
             .text()
-        ).toBe('c 4');
+        ).toBe("c 4");
 
         return Promise.all([...MOCK_API_PROMISES]).then(() => secondRender);
       })
@@ -550,7 +550,7 @@ test('v0.0.1: Client render of <App /> with server rendering configured off for 
   );
 });
 
-test('v0.0.1: Server render of <App /> with all mock api call promises resolved', () => {
+test("v0.0.1: Server render of <App /> with all mock api call promises resolved", () => {
   const store = buildCleanStore();
 
   const App = () => (
@@ -564,21 +564,21 @@ test('v0.0.1: Server render of <App /> with all mock api call promises resolved'
     </Frontload>
   );
 
-  return frontloadServerRender(() =>
-    render(<App />)
-  ).then(serverRenderedMarkup => {
-    expect(MockApi.getA.withArgs('1').callCount).toBe(1);
-    expect(MockApi.getB.withArgs('3').callCount).toBe(1);
-    expect(MockApi.getC.withArgs('2').callCount).toBe(1);
-    expect(MockApi.getC.withArgs('4').callCount).toBe(1);
+  return frontloadServerRender(() => render(<App />)).then(
+    serverRenderedMarkup => {
+      expect(MockApi.getA.withArgs("1").callCount).toBe(1);
+      expect(MockApi.getB.withArgs("3").callCount).toBe(1);
+      expect(MockApi.getC.withArgs("2").callCount).toBe(1);
+      expect(MockApi.getC.withArgs("4").callCount).toBe(1);
 
-    assertServerRenderedMarkupStructureIsAsExpected(serverRenderedMarkup);
-    assertStoreIsPopulated(store);
-    assertDataFromStoreIsRenderedOnServer(serverRenderedMarkup);
-  });
+      assertServerRenderedMarkupStructureIsAsExpected(serverRenderedMarkup);
+      assertStoreIsPopulated(store);
+      assertDataFromStoreIsRenderedOnServer(serverRenderedMarkup);
+    }
+  );
 });
 
-test('v0.0.1: Server render of <App /> with 2 mock api call promises resolved and 2 rejected', () => {
+test("v0.0.1: Server render of <App /> with 2 mock api call promises resolved and 2 rejected", () => {
   const store = buildCleanStore();
 
   const App = () => (
@@ -592,23 +592,23 @@ test('v0.0.1: Server render of <App /> with 2 mock api call promises resolved an
     </Frontload>
   );
 
-  return frontloadServerRender(() =>
-    render(<App />)
-  ).then(serverRenderedMarkup => {
-    expect(MockApi.getA.withArgs('1').callCount).toBe(1);
-    expect(MockApi.getB.withArgs('3', true).callCount).toBe(1);
-    expect(MockApi.getC.withArgs('2', true).callCount).toBe(1);
-    expect(MockApi.getC.withArgs('4').callCount).toBe(1);
+  return frontloadServerRender(() => render(<App />)).then(
+    serverRenderedMarkup => {
+      expect(MockApi.getA.withArgs("1").callCount).toBe(1);
+      expect(MockApi.getB.withArgs("3", true).callCount).toBe(1);
+      expect(MockApi.getC.withArgs("2", true).callCount).toBe(1);
+      expect(MockApi.getC.withArgs("4").callCount).toBe(1);
 
-    assertServerRenderedMarkupStructureIsAsExpected(serverRenderedMarkup);
-    assertStoreIsPopulatedIncludingFailures(store);
-    assertDataFromStoreIsRenderedOnServerIncludingFailures(
-      serverRenderedMarkup
-    );
-  });
+      assertServerRenderedMarkupStructureIsAsExpected(serverRenderedMarkup);
+      assertStoreIsPopulatedIncludingFailures(store);
+      assertDataFromStoreIsRenderedOnServerIncludingFailures(
+        serverRenderedMarkup
+      );
+    }
+  );
 });
 
-test('v0.0.1: Server render of <App /> with server rendering configured off globally', () => {
+test("v0.0.1: Server render of <App /> with server rendering configured off globally", () => {
   const store = buildCleanStore();
 
   const App = () => (
@@ -622,21 +622,21 @@ test('v0.0.1: Server render of <App /> with server rendering configured off glob
     </Frontload>
   );
 
-  return frontloadServerRender(() =>
-    render(<App />)
-  ).then(serverRenderedMarkup => {
-    expect(MockApi.getA.withArgs('1').callCount).toBe(0);
-    expect(MockApi.getB.withArgs('3').callCount).toBe(0);
-    expect(MockApi.getC.withArgs('2').callCount).toBe(0);
-    expect(MockApi.getC.withArgs('4').callCount).toBe(0);
+  return frontloadServerRender(() => render(<App />)).then(
+    serverRenderedMarkup => {
+      expect(MockApi.getA.withArgs("1").callCount).toBe(0);
+      expect(MockApi.getB.withArgs("3").callCount).toBe(0);
+      expect(MockApi.getC.withArgs("2").callCount).toBe(0);
+      expect(MockApi.getC.withArgs("4").callCount).toBe(0);
 
-    assertServerRenderedMarkupStructureIsAsExpected(serverRenderedMarkup);
-    assertStoreIsEmpty(store);
-    assertLoadersAreRenderedOnServer(serverRenderedMarkup);
-  });
+      assertServerRenderedMarkupStructureIsAsExpected(serverRenderedMarkup);
+      assertStoreIsEmpty(store);
+      assertLoadersAreRenderedOnServer(serverRenderedMarkup);
+    }
+  );
 });
 
-test('v0.0.1: Server render of <App /> with server rendering configured off for one component', () => {
+test("v0.0.1: Server render of <App /> with server rendering configured off for one component", () => {
   const store = buildCleanStore();
 
   const App = () => (
@@ -650,51 +650,51 @@ test('v0.0.1: Server render of <App /> with server rendering configured off for 
     </Frontload>
   );
 
-  return frontloadServerRender(() =>
-    render(<App />)
-  ).then(serverRenderedMarkup => {
-    expect(MockApi.getA.withArgs('1').callCount).toBe(1);
-    expect(MockApi.getB.withArgs('3').callCount).toBe(1);
-    expect(MockApi.getC.withArgs('2').callCount).toBe(1);
-    expect(MockApi.getC.withArgs('4').callCount).toBe(0);
+  return frontloadServerRender(() => render(<App />)).then(
+    serverRenderedMarkup => {
+      expect(MockApi.getA.withArgs("1").callCount).toBe(1);
+      expect(MockApi.getB.withArgs("3").callCount).toBe(1);
+      expect(MockApi.getC.withArgs("2").callCount).toBe(1);
+      expect(MockApi.getC.withArgs("4").callCount).toBe(0);
 
-    assertServerRenderedMarkupStructureIsAsExpected(serverRenderedMarkup);
+      assertServerRenderedMarkupStructureIsAsExpected(serverRenderedMarkup);
 
-    // assert all data is populated in store apart from the data loaded by Component3WithNoServerRender
-    expect(store.a['1']).toEqual({ id: '1', data: 'a 1' });
-    expect(store.b['3']).toEqual({ id: '3', data: 'b 3' });
-    expect(store.c['2']).toEqual({ id: '2', data: 'c 2' });
-    expect(store.c['4']).toBeUndefined();
+      // assert all data is populated in store apart from the data loaded by Component3WithNoServerRender
+      expect(store.a["1"]).toEqual({ id: "1", data: "a 1" });
+      expect(store.b["3"]).toEqual({ id: "3", data: "b 3" });
+      expect(store.c["2"]).toEqual({ id: "2", data: "c 2" });
+      expect(store.c["4"]).toBeUndefined();
 
-    // assert all data is rendered apart from the data for Component3WithNoServerRender, which still shows loading
-    expect(
-      serverRenderedMarkup
-        .find('div.leaf')
-        .eq(0)
-        .text()
-    ).toBe('a 1');
-    expect(
-      serverRenderedMarkup
-        .find('div.leaf')
-        .eq(1)
-        .text()
-    ).toBe('c 2');
-    expect(
-      serverRenderedMarkup
-        .find('div.leaf')
-        .eq(2)
-        .text()
-    ).toBe('b 3');
-    expect(
-      serverRenderedMarkup
-        .find('div.leaf')
-        .eq(3)
-        .text()
-    ).toBe('loading...');
-  });
+      // assert all data is rendered apart from the data for Component3WithNoServerRender, which still shows loading
+      expect(
+        serverRenderedMarkup
+          .find("div.leaf")
+          .eq(0)
+          .text()
+      ).toBe("a 1");
+      expect(
+        serverRenderedMarkup
+          .find("div.leaf")
+          .eq(1)
+          .text()
+      ).toBe("c 2");
+      expect(
+        serverRenderedMarkup
+          .find("div.leaf")
+          .eq(2)
+          .text()
+      ).toBe("b 3");
+      expect(
+        serverRenderedMarkup
+          .find("div.leaf")
+          .eq(3)
+          .text()
+      ).toBe("loading...");
+    }
+  );
 });
 
-test('v0.0.2: Client render of <App /> with frontloads firing api calls based on lifecycle phase', () => {
+test("v0.0.2: Client render of <App /> with frontloads firing api calls based on lifecycle phase", () => {
   const store = buildCleanStore();
 
   const App = () => (
@@ -716,9 +716,9 @@ test('v0.0.2: Client render of <App /> with frontloads firing api calls based on
   // Component 1 frontload should run (configured to run on both mount and update)
   // Component 2 frontload should NOT run (configured to only run on update - this is a mount)
   // Component 3 frontload should run (configured to run only on mount - this is the mount)
-  expect(MockApi.getA.withArgs('1').callCount).toBe(1);
-  expect(MockApi.getB.withArgs('2').callCount).toBe(0);
-  expect(MockApi.getC.withArgs('3').callCount).toBe(1);
+  expect(MockApi.getA.withArgs("1").callCount).toBe(1);
+  expect(MockApi.getB.withArgs("2").callCount).toBe(0);
+  expect(MockApi.getC.withArgs("3").callCount).toBe(1);
 
   // Assert content is loading (frontload promises, from those that ran, are still in flight at this stage)
   expect(firstRender.find(Component1)).toHaveLength(1);
@@ -736,19 +736,19 @@ test('v0.0.2: Client render of <App /> with frontloads firing api calls based on
       .find(Leaf)
       .at(0)
       .text()
-  ).toBe('loading...');
+  ).toBe("loading...");
   expect(
     firstRender
       .find(Leaf)
       .at(1)
       .text()
-  ).toBe('loading...');
+  ).toBe("loading...");
   expect(
     firstRender
       .find(Leaf)
       .at(2)
       .text()
-  ).toBe('loading...');
+  ).toBe("loading...");
 
   assertStoreIsEmpty(store);
 
@@ -761,9 +761,9 @@ test('v0.0.2: Client render of <App /> with frontloads firing api calls based on
       // Component 1 frontload should run again (configured to run on both mount and update)
       // Component 2 frontload should run (configured to only run on update - this is an update)
       // Component 3 frontload should NOT run (configured to run only on mount - this is an update)
-      expect(MockApi.getA.withArgs('1').callCount).toBe(1);
-      expect(MockApi.getB.withArgs('2').callCount).toBe(0);
-      expect(MockApi.getC.withArgs('3').callCount).toBe(1);
+      expect(MockApi.getA.withArgs("1").callCount).toBe(1);
+      expect(MockApi.getB.withArgs("2").callCount).toBe(0);
+      expect(MockApi.getC.withArgs("3").callCount).toBe(1);
 
       // Assert loaded content is rendered, and component 2 which still has its frontload promise in flight shows loading
       expect(firstRender.find(Component1)).toHaveLength(1);
@@ -781,23 +781,23 @@ test('v0.0.2: Client render of <App /> with frontloads firing api calls based on
           .find(Leaf)
           .at(0)
           .text()
-      ).toBe('a 1');
+      ).toBe("a 1");
       expect(
         firstRender
           .find(Leaf)
           .at(1)
           .text()
-      ).toBe('loading...'); // Component 2's frontload only ran on second render, promise still in flight, data still loading
+      ).toBe("loading..."); // Component 2's frontload only ran on second render, promise still in flight, data still loading
       expect(
         firstRender
           .find(Leaf)
           .at(2)
           .text()
-      ).toBe('c 3');
+      ).toBe("c 3");
 
-      expect(store.a['1']).toEqual({ id: '1', data: 'a 1' });
-      expect(store.b['2']).toBeUndefined(); // Component 2's frontload only ran on second render, promise still in flight, data still loading
-      expect(store.c['3']).toEqual({ id: '3', data: 'c 3' });
+      expect(store.a["1"]).toEqual({ id: "1", data: "a 1" });
+      expect(store.b["2"]).toBeUndefined(); // Component 2's frontload only ran on second render, promise still in flight, data still loading
+      expect(store.c["3"]).toEqual({ id: "3", data: "c 3" });
 
       return Promise.all([...MOCK_API_PROMISES]).then(() => secondRender);
     })
@@ -808,9 +808,9 @@ test('v0.0.2: Client render of <App /> with frontloads firing api calls based on
       // Component 1 frontload should run again (configured to run on both mount and update)
       // Component 2 frontload should run again (configured to only run on update - this is an update)
       // Component 3 frontload should NOT run (configured to run only on mount - this is an update)
-      expect(MockApi.getA.withArgs('1').callCount).toBe(3);
-      expect(MockApi.getB.withArgs('2').callCount).toBe(2);
-      expect(MockApi.getC.withArgs('3').callCount).toBe(1);
+      expect(MockApi.getA.withArgs("1").callCount).toBe(3);
+      expect(MockApi.getB.withArgs("2").callCount).toBe(2);
+      expect(MockApi.getC.withArgs("3").callCount).toBe(1);
 
       // Assert all content is loaded and rendered now
       expect(thirdRender.find(Component1)).toHaveLength(1);
@@ -828,22 +828,22 @@ test('v0.0.2: Client render of <App /> with frontloads firing api calls based on
           .find(Leaf)
           .at(0)
           .text()
-      ).toBe('a 1');
+      ).toBe("a 1");
       expect(
         thirdRender
           .find(Leaf)
           .at(1)
           .text()
-      ).toBe('b 2');
+      ).toBe("b 2");
       expect(
         thirdRender
           .find(Leaf)
           .at(2)
           .text()
-      ).toBe('c 3');
+      ).toBe("c 3");
 
-      expect(store.a['1']).toEqual({ id: '1', data: 'a 1' });
-      expect(store.b['2']).toEqual({ id: '2', data: 'b 2' });
-      expect(store.c['3']).toEqual({ id: '3', data: 'c 3' });
+      expect(store.a["1"]).toEqual({ id: "1", data: "a 1" });
+      expect(store.b["2"]).toEqual({ id: "2", data: "b 2" });
+      expect(store.c["3"]).toEqual({ id: "3", data: "c 3" });
     });
 });
