@@ -6,13 +6,13 @@
   "scripts": {
     "build": "npm test && mkdir -p ./lib && babel ./src/index.js -o ./lib/index.js",
     "test": "jest",
-    "prepublish": "npm run build"
+    "prepare": "npm run build"
   },
   "author": "davnicwil",
   "license": "MIT",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/davnicwil/react-frontload"
+    "type": "git",
+    "url": "https://github.com/davnicwil/react-frontload"
   },
   "keywords": [
     "react",
@@ -35,7 +35,6 @@
     "prop-types": "^15.6.0"
   },
   "devDependencies": {
-    "babel": "^6.23.0",
     "babel-cli": "^6.23.0",
     "babel-eslint": "^7.1.1",
     "babel-jest": "^19.0.0",
