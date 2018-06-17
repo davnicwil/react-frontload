@@ -1,5 +1,4 @@
 import React from 'react';
-import { polyfill as polyfillPromise } from 'es6-promise';
 import {
   frontloadServerRender,
   frontloadConnect,
@@ -9,7 +8,7 @@ import { mount, render } from 'enzyme';
 import random from 'lodash.random';
 import sinon from 'sinon';
 
-if (!global.Promise) polyfillPromise();
+require('es6-promise/auto');
 
 const mockApiCall = ({ value, delay, fail }) => {
   const promise = new Promise((resolve, reject) => {
@@ -61,6 +60,7 @@ const MockApi = {
 // so that a subsequent render can be run knowing that the store is populated with the
 // data from the mock api calls
 let MOCK_API_PROMISES;
+
 beforeEach(() => {
   MOCK_API_PROMISES = [];
   sinon.reset();
@@ -761,8 +761,8 @@ test('v0.0.2: Client render of <App /> with frontloads firing api calls based on
       // Component 1 frontload should run again (configured to run on both mount and update)
       // Component 2 frontload should run (configured to only run on update - this is an update)
       // Component 3 frontload should NOT run (configured to run only on mount - this is an update)
-      expect(MockApi.getA.withArgs('1').callCount).toBe(2);
-      expect(MockApi.getB.withArgs('2').callCount).toBe(1);
+      expect(MockApi.getA.withArgs('1').callCount).toBe(1);
+      expect(MockApi.getB.withArgs('2').callCount).toBe(0);
       expect(MockApi.getC.withArgs('3').callCount).toBe(1);
 
       // Assert loaded content is rendered, and component 2 which still has its frontload promise in flight shows loading

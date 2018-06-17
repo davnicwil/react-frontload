@@ -23,6 +23,11 @@
     "server",
     "server render"
   ],
+  "jest": {
+    "setupFiles": [
+      "./tests/setup.js"
+    ]
+  },
   "standard": {
     "parser": "babel-eslint",
     "globals": [
@@ -41,8 +46,9 @@
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.23.0",
-    "enzyme": "^2.7.1",
-    "es6-promise": "^4.0.5",
+    "enzyme": "^3.3.0",
+    "enzyme-adapter-react-15": "^1.0.5",
+    "es6-promise": "^4.2.4",
     "jest": "^23.1.0",
     "lodash.random": "^3.2.0",
     "react": "^15.4.2",
