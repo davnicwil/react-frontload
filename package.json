@@ -50,7 +50,6 @@
     "enzyme-adapter-react-15": "^1.0.5",
     "es6-promise": "^4.2.4",
     "jest": "^23.1.0",
-    "lodash.random": "^3.2.0",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
     "react-test-renderer": "^15.4.2",

@@ -5,7 +5,6 @@ import {
   Frontload
 } from '../src/index';
 import { mount, render } from 'enzyme';
-import random from 'lodash.random';
 import sinon from 'sinon';
 
 require('es6-promise/auto');
@@ -28,27 +27,28 @@ const mockApiCall = ({ value, delay, fail }) => {
 // some random latency for mock api calls -
 // not enough to noticably slow down tests but enough to simulate true async conditions
 // for frontload
-const randomLatency = () => random(200, 500);
+const randomLatency = (max, min) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
 
 const MockApi = {
   getA: sinon.spy((id, mockRestricted) =>
     mockApiCall({
       value: { id, data: `a ${id}` },
-      delay: randomLatency(),
+      delay: randomLatency(200, 500),
       fail: mockRestricted && 401
     })
   ),
   getB: sinon.spy((id, mockRestricted) =>
     mockApiCall({
       value: { id, data: `b ${id}` },
-      delay: randomLatency(),
+      delay: randomLatency(200, 500),
       fail: mockRestricted && 401
     })
   ),
   getC: sinon.spy((id, mockRestricted) =>
     mockApiCall({
       value: { id, data: `c ${id}` },
-      delay: randomLatency(),
+      delay: randomLatency(200, 500),
       fail: mockRestricted && 401
     })
   )
@@ -149,7 +149,7 @@ const assertDomStructureIsAsExpected = rendered => {
 };
 
 const assertServerRenderedMarkupStructureIsAsExpected = rendered => {
-  expect(rendered.find('div.parent')).toHaveLength(2);
+  expect(rendered.find('div.parent')).toHaveLength(1);
   expect(rendered.find('div.leaf')).toHaveLength(4);
 };
 
