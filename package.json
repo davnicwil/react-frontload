@@ -4,7 +4,7 @@
   "description": "Bind Async Data Dependencies to React Components",
   "main": "./lib/index.js",
   "scripts": {
-    "build": "npm test && mkdir -p ./lib && babel ./src/index.js -o ./lib/index.js",
+    "build": "npm test && babel src -d lib",
     "test": "jest",
     "precommit": "pretty-quick --staged",
     "prepare": "npm run build"
