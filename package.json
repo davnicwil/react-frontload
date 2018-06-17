@@ -6,6 +6,7 @@
   "scripts": {
     "build": "npm test && mkdir -p ./lib && babel ./src/index.js -o ./lib/index.js",
     "test": "jest",
+    "precommit": "pretty-quick --staged",
     "prepare": "npm run build"
   },
   "author": "davnicwil",
@@ -21,19 +22,15 @@
     "async",
     "bind",
     "server",
-    "server render"
+    "server render",
+    "ssr",
+    "server-side rendering",
+    "server side rendering",
+    "server rendering"
   ],
   "jest": {
     "setupFiles": [
       "./tests/setup.js"
-    ]
-  },
-  "standard": {
-    "parser": "babel-eslint",
-    "globals": [
-      "test",
-      "expect",
-      "beforeEach"
     ]
   },
   "dependencies": {
@@ -49,12 +46,14 @@
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-15": "^1.0.5",
     "es6-promise": "^4.2.4",
+    "husky": "^0.14.3",
     "jest": "^23.1.0",
+    "prettier": "^1.13.5",
+    "pretty-quick": "^1.6.0",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
     "react-test-renderer": "^15.4.2",
-    "sinon": "^6.0.0",
-    "standard": "^9.0.0"
+    "sinon": "^6.0.0"
   },
   "peerDependencies": {
     "react": "^0.14.0 || ^15.0.0 || ^16.0.0"
