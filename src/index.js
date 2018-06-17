@@ -1,77 +1,80 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from 'react';
+import PropTypes from 'prop-types';
 
-let FRONTLOAD_QUEUES = []
+let FRONTLOAD_QUEUES = [];
 
 const LIFECYCLE_PHASES = {
   MOUNT: 0,
   UPDATE: 1
-}
+};
 
-const log = (process.env.NODE_ENV !== 'production') && ((name, message) => {
-  console.log(`[react-frontload]${name ? ` [${name}]` : ''} ${message}`)
-})
+const log =
+  process.env.NODE_ENV !== 'production' &&
+  ((name, message) => {
+    console.log(`[react-frontload]${name ? ` [${name}]` : ''} ${message}`);
+  });
 
-const autoDetectIsServer = () => (
+const autoDetectIsServer = () =>
   typeof window === 'undefined' ||
   !window.document ||
-  !window.document.createElement
-)
+  !window.document.createElement;
 
-const cleanQueues = (index) => {
+const cleanQueues = index => {
   if (index === undefined) {
-    FRONTLOAD_QUEUES = []
+    FRONTLOAD_QUEUES = [];
   } else {
-    FRONTLOAD_QUEUES[index] = []
+    FRONTLOAD_QUEUES[index] = [];
   }
-}
+};
 
 const map = (arr, fn) => {
-  const mapped = []
-  for (let i = 0; i < arr.length; i++) mapped.push(fn(arr[i], i))
+  const mapped = [];
+  for (let i = 0; i < arr.length; i++) mapped.push(fn(arr[i], i));
 
-  return mapped
-}
+  return mapped;
+};
 
 // util with same behaviour of Promise.all, except it does not short-circuit
 // to catch if one of the promises rejects. It resolves when all the passed promises
 // have either resolved or rejected
-const waitForAllToComplete = (promises) => (
-  Promise.all(map(promises, (promise) => (
-    promise['catch']((error) => error)
-  )))
-)
+const waitForAllToComplete = promises =>
+  Promise.all(map(promises, promise => promise['catch'](error => error)));
 
-function flushQueues (index, options = {}) {
-  if (index === undefined) return Promise.all(map(FRONTLOAD_QUEUES, (_, i) => flushQueues(i)))
+function flushQueues(index, options = {}) {
+  if (index === undefined)
+    return Promise.all(map(FRONTLOAD_QUEUES, (_, i) => flushQueues(i)));
 
-  const frontloadPromises = []
-  const queue = FRONTLOAD_QUEUES[index]
+  const frontloadPromises = [];
+  const queue = FRONTLOAD_QUEUES[index];
 
   for (let i = 0; i < queue.length; i++) {
-    const frontload = queue[i]
+    const frontload = queue[i];
     if (!options.firstClientRender) {
-      frontloadPromises.push(frontload.fn())
+      frontloadPromises.push(frontload.fn());
     } else if (options.noServerRender || frontload.options.noServerRender) {
       if (process.env.NODE_ENV !== 'production' && !!options.log) {
-        options.log(`[1st client render] NOTE running frontload fn for component [${frontload.componentDisplayName}], since noServerRender === true ${options.noServerRender ? 'globally' : 'for this component'}`)
+        options.log(
+          `[1st client render] NOTE running frontload fn for component [${frontload.componentDisplayName}], since noServerRender === true ${options.noServerRender
+            ? 'globally'
+            : 'for this component'}`
+        );
       }
 
-      frontloadPromises.push(frontload.fn())
+      frontloadPromises.push(frontload.fn());
     }
   }
 
-  cleanQueues(index)
+  cleanQueues(index);
 
-  return waitForAllToComplete(frontloadPromises)
+  return waitForAllToComplete(frontloadPromises);
 }
 
 export class Frontload extends React.Component {
   static childContextTypes = {
     frontload: PropTypes.object
-  }
+  };
 
-  getChildContext () {
+  getChildContext() {
     return {
       frontload: {
         isServer: this.isServer,
@@ -80,11 +83,18 @@ export class Frontload extends React.Component {
           : this.firstClientRenderDone,
         // this does the work of either executing the frontload function on the client,
         // or pushing it to the queue for eventual execution on the server
-        pushFrontload: (frontload, options, lifecylePhase, childProps, logMessage) => {
-          const isMount = lifecylePhase === LIFECYCLE_PHASES.MOUNT
-          const isUpdate = lifecylePhase === LIFECYCLE_PHASES.UPDATE
-          const queue = FRONTLOAD_QUEUES[this.queueIndex]
-          const noServerRender = this.props.noServerRender || options.noServerRender
+        pushFrontload: (
+          frontload,
+          options,
+          lifecylePhase,
+          childProps,
+          logMessage
+        ) => {
+          const isMount = lifecylePhase === LIFECYCLE_PHASES.MOUNT;
+          const isUpdate = lifecylePhase === LIFECYCLE_PHASES.UPDATE;
+          const queue = FRONTLOAD_QUEUES[this.queueIndex];
+          const noServerRender =
+            this.props.noServerRender || options.noServerRender;
 
           // if on server, and noServerRender is configured globally or locally
           // or if the frontload is configured not to run for this lifecycle phase
@@ -94,7 +104,7 @@ export class Frontload extends React.Component {
             (isMount && options.onMount === false) || // onMount default true
             (isUpdate && !options.onUpdate) // onUpdate default false
           ) {
-            return
+            return;
           }
 
           // if on server -> add frontload to a queue for eventual execution
@@ -103,35 +113,49 @@ export class Frontload extends React.Component {
               fn: () => frontload(childProps, { isMount, isUpdate }),
               options,
               componentDisplayName: childProps.displayName
-            })
+            });
 
-            if (process.env.NODE_ENV !== 'production' && this.props.withLogging && logMessage) {
-              log(this.props.name, `added frontload fn to queue ${logMessage}`)
+            if (
+              process.env.NODE_ENV !== 'production' &&
+              this.props.withLogging &&
+              logMessage
+            ) {
+              log(this.props.name, `added frontload fn to queue ${logMessage}`);
             }
-          // if on client -> just execute it immediately, but only after first client render is done if server rendering is enabled
+            // if on client -> just execute it immediately, but only after first client render is done if server rendering is enabled
           } else if (noServerRender || this.firstClientRenderDone) {
-            frontload(childProps, { isMount, isUpdate })
+            frontload(childProps, { isMount, isUpdate });
 
-            if (process.env.NODE_ENV !== 'production' && this.props.withLogging && logMessage) {
-              log(this.props.name, `executed frontload fn ${logMessage}`)
+            if (
+              process.env.NODE_ENV !== 'production' &&
+              this.props.withLogging &&
+              logMessage
+            ) {
+              log(this.props.name, `executed frontload fn ${logMessage}`);
             }
-          // log when frontload is not run on client first render because of server rendering
-          } else if (process.env.NODE_ENV !== 'production' && this.props.withLogging && logMessage) {
-            log(this.props.name, `did not execute frontload fn on first client render ${logMessage}, since server rendering is enabled`)
+            // log when frontload is not run on client first render because of server rendering
+          } else if (
+            process.env.NODE_ENV !== 'production' &&
+            this.props.withLogging &&
+            logMessage
+          ) {
+            log(
+              this.props.name,
+              `did not execute frontload fn on first client render ${logMessage}, since server rendering is enabled`
+            );
           }
         }
       }
-    }
+    };
   }
 
-  constructor (props, context) {
-    super(props, context)
+  constructor(props, context) {
+    super(props, context);
 
-    this.isServer = (props.isServer === undefined)
-      ? autoDetectIsServer()
-      : props.isServer
+    this.isServer =
+      props.isServer === undefined ? autoDetectIsServer() : props.isServer;
 
-    this.queueIndex = FRONTLOAD_QUEUES.push([]) - 1
+    this.queueIndex = FRONTLOAD_QUEUES.push([]) - 1;
 
     // hook for first ever render on client
     // by default, no frontloads are run on first render, because it is assumed that server rendering is being used
@@ -143,59 +167,86 @@ export class Frontload extends React.Component {
     // on first render - in a per-frontload option { noServerRender: true }, or in a prop on this
     // Frontload provider: { noServerRender: true }, which of course enables this for all frontload fns
     this.componentDidMount = () => {
-      this.firstClientRenderDone = true
+      this.firstClientRenderDone = true;
 
-      if (process.env.NODE_ENV !== 'production' && props.withLogging && !props.noServerRender) {
-        log(props.name, '1st client render done, from now on all frontloads will run')
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        props.withLogging &&
+        !props.noServerRender
+      ) {
+        log(
+          props.name,
+          '1st client render done, from now on all frontloads will run'
+        );
       }
-    }
+    };
   }
 
-  render () {
-    return React.Children.only(this.props.children)
+  render() {
+    return React.Children.only(this.props.children);
   }
 }
 
 class FrontloadConnectedComponent extends React.Component {
   static contextTypes = {
     frontload: PropTypes.object
-  }
+  };
 
-  constructor (props, context) {
-    super(props, context)
+  constructor(props, context) {
+    super(props, context);
 
     if (context.frontload.isServer) {
-      this.componentWillMount = this.pushFrontload(LIFECYCLE_PHASES.MOUNT, true)
+      this.componentWillMount = this.pushFrontload(
+        LIFECYCLE_PHASES.MOUNT,
+        true
+      );
     } else {
-      this.componentDidMount = this.pushFrontload(LIFECYCLE_PHASES.MOUNT)
-      this.componentDidUpdate = this.pushFrontload(LIFECYCLE_PHASES.UPDATE)
+      this.componentDidMount = this.pushFrontload(LIFECYCLE_PHASES.MOUNT);
+      this.componentDidUpdate = this.pushFrontload(LIFECYCLE_PHASES.UPDATE);
     }
   }
 
   pushFrontload = (lifecyclePhase, isServer) => () => {
-    const logMessage = (process.env.NODE_ENV !== 'production')
-      ? null
-      : `for component: [${this.props.component.displayName || 'anonymous'}] on [${(lifecyclePhase === LIFECYCLE_PHASES.MOUNT) ? 'mount' : 'update'}]`
+    const logMessage =
+      process.env.NODE_ENV !== 'production'
+        ? null
+        : `for component: [${this.props.component.displayName ||
+            'anonymous'}] on [${lifecyclePhase === LIFECYCLE_PHASES.MOUNT
+            ? 'mount'
+            : 'update'}]`;
 
-    this.context.frontload.pushFrontload(this.props.frontload, this.props.options, lifecyclePhase, this.props.componentProps, logMessage)
-  }
+    this.context.frontload.pushFrontload(
+      this.props.frontload,
+      this.props.options,
+      lifecyclePhase,
+      this.props.componentProps,
+      logMessage
+    );
+  };
 
-  render () {
-    return <this.props.component {...this.props.componentProps} />
+  render() {
+    return <this.props.component {...this.props.componentProps} />;
   }
 }
 
-export const frontloadConnect = (frontload, options = {}) => (component) => (props) => (
+export const frontloadConnect = (
+  frontload,
+  options = {}
+) => component => props => (
   <FrontloadConnectedComponent
     frontload={frontload}
     component={component}
     componentProps={props}
-    options={options} />
-)
+    options={options}
+  />
+);
 
 export const frontloadServerRender = (render, withLogging) => {
   if (process.env.NODE_ENV !== 'production' && withLogging) {
-    log('frontloadServerRender info', 'running first render to fill frontload fn queue(s)')
+    log(
+      'frontloadServerRender info',
+      'running first render to fill frontload fn queue(s)'
+    );
   }
 
   // a first render is required to fill the frontload queue(s) wth the frontload
@@ -203,33 +254,48 @@ export const frontloadServerRender = (render, withLogging) => {
   // The result of this first render is useless, and is thrown away, so there is more work than
   // necessary done here. This could be improved, for example if a future version of react implements something like a
   // rendering dry-run to walk the component tree without actually doing the render at the end
-  render()
+  render();
 
   if (process.env.NODE_ENV !== 'production' && withLogging) {
-    log('frontloadServerRender info', 'first render succeeded, frontend fn queue(s) filled')
-    log('frontloadServerRender info', 'flushing frontend fn queue(s) before running second render...')
+    log(
+      'frontloadServerRender info',
+      'first render succeeded, frontend fn queue(s) filled'
+    );
+    log(
+      'frontloadServerRender info',
+      'flushing frontend fn queue(s) before running second render...'
+    );
   }
 
-  const startFlushAt = withLogging && Date.now()
+  const startFlushAt = withLogging && Date.now();
 
   const rendered = flushQueues().then(() => {
     if (process.env.NODE_ENV !== 'production' && withLogging) {
-      log('frontloadServerRender info', `flushed frontload fn queue(s) in ${Date.now() - startFlushAt}ms`)
-      log('frontloadServerRender info', 'Running second render.')
+      log(
+        'frontloadServerRender info',
+        `flushed frontload fn queue(s) in ${Date.now() - startFlushAt}ms`
+      );
+      log('frontloadServerRender info', 'Running second render.');
     }
 
-    const output = render()
+    const output = render();
 
     // all queues get filled again on the second render. Just clean them, don't flush them
-    cleanQueues()
+    cleanQueues();
 
     if (process.env.NODE_ENV !== 'production' && withLogging) {
-      log('frontloadServerRender info', 'NOTE: as the logs show, the queue(s) are filled by Frontload before the second render, however they are NOT flushed, so the frontload fns DO NOT run twice.')
-      log('frontloadServerRender info', 'second render succeeded. Server rendering is done.')
+      log(
+        'frontloadServerRender info',
+        'NOTE: as the logs show, the queue(s) are filled by Frontload before the second render, however they are NOT flushed, so the frontload fns DO NOT run twice.'
+      );
+      log(
+        'frontloadServerRender info',
+        'second render succeeded. Server rendering is done.'
+      );
     }
 
-    return output
-  })
+    return output;
+  });
 
-  return rendered
-}
+  return rendered;
+};
