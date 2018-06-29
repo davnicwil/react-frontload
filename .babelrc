@@ -1,10 +1,5 @@
 {
-  "presets": [
-    "es2015",
-    "stage-0",
-    "react"
-  ],
-  "plugins": [
-    "remove-comments"
-  ]
+  "presets": ["env", "react"],
+  "plugins": ["transform-class-properties"],
+  "comments": false
 }

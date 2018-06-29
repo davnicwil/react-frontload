@@ -2,7 +2,6 @@ import React from 'react'
 import { polyfill as polyfillPromise } from 'es6-promise'
 import { frontloadServerRender, frontloadConnect, Frontload } from '../src/index'
 import { mount, render } from 'enzyme'
-import random from 'lodash.random'
 import sinon from 'sinon'
 
 if (!global.Promise) polyfillPromise()
@@ -25,19 +24,19 @@ const mockApiCall = ({ value, delay, fail }) => {
 // some random latency for mock api calls -
 // not enough to noticably slow down tests but enough to simulate true async conditions
 // for frontload
-const randomLatency = () => random(200, 500)
+const randomLatency = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min
 
-const sinonSandbox = sinon.sandbox.create()
+const sinonSandbox = sinon.createSandbox()
 
 const MockApi = {
   getA: sinonSandbox.spy((id, mockRestricted) => (
-    mockApiCall({ value: { id, data: `a ${id}` }, delay: randomLatency(), fail: mockRestricted && 401 })
+    mockApiCall({ value: { id, data: `a ${id}` }, delay: randomLatency(200, 500), fail: mockRestricted && 401 })
   )),
   getB: sinonSandbox.spy((id, mockRestricted) => (
-    mockApiCall({ value: { id, data: `b ${id}` }, delay: randomLatency(), fail: mockRestricted && 401 })
+    mockApiCall({ value: { id, data: `b ${id}` }, delay: randomLatency(200, 500), fail: mockRestricted && 401 })
   )),
   getC: sinonSandbox.spy((id, mockRestricted) => (
-    mockApiCall({ value: { id, data: `c ${id}` }, delay: randomLatency(), fail: mockRestricted && 401 })
+    mockApiCall({ value: { id, data: `c ${id}` }, delay: randomLatency(200, 500), fail: mockRestricted && 401 })
   ))
 }
 
