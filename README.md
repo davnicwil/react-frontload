@@ -56,5 +56,13 @@ It returns the markup output by `renderFunction`, which can be sent as a respons
 
 The reason this wrapper function is required has to do with the way react-frontload works under the hood. You can think of `serverRender` as a proxy for your existing server rendering logic, that 'injects' the plumbing that makes react-frontload work.
 
+Your `renderFunction` is executed firstly to build the react tree and execute all the frontload functions (your async requests for data). Once all the requests are completed we then call `renderFunction` a second time to generate final markup. This can cause an issue for anyone relying on global scope so we pass a boolean to signify the first dry-run.
+
+```js
+  frontloadServerRender((dryRun) => {
+    // dryRun is either true or false.
+  })
+```
+
 
 
