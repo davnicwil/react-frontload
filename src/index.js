@@ -203,7 +203,8 @@ export const frontloadServerRender = (render, withLogging) => {
   // The result of this first render is useless, and is thrown away, so there is more work than
   // necessary done here. This could be improved, for example if a future version of react implements something like a
   // rendering dry-run to walk the component tree without actually doing the render at the end
-  render()
+  // the true flag here signals that this render is just a "dry-run"
+  render(true)
 
   if (process.env.NODE_ENV !== 'production' && withLogging) {
     log('frontloadServerRender info', 'first render succeeded, frontend fn queue(s) filled')
@@ -218,7 +219,7 @@ export const frontloadServerRender = (render, withLogging) => {
       log('frontloadServerRender info', 'Running second render.')
     }
 
-    const output = render()
+    const output = render(false)
 
     // all queues get filled again on the second render. Just clean them, don't flush them
     cleanQueues()
