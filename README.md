@@ -13,7 +13,7 @@
 import { frontloadConnect } from 'react-frontload'
 
 const YourComponent = (props) => (
-  <div>{props.data ? 'Loaded: ${data} : 'Loading...'}</div>
+  <div>{props.data ? 'Loaded: ${props.data} : 'Loading...'}</div>
 )
 
 const loadData = () => new Promise(resolve => {
@@ -22,11 +22,11 @@ const loadData = () => new Promise(resolve => {
 
 const frontload = async (props) => {
   const data = await loadData()
-  yourStateManager.updateState(data)
+  yourStateManager.updateState(data) // e.g. redux dispatch
 }
 
 const YourConnectedComponent =
-  yourStateManager.connectDataPropFromState(
+  yourStateManager.connectDataPropFromState( // e.g. redux connect
   frontloadConnect(frontload)(
     YourComponent
   ))
@@ -48,7 +48,7 @@ const YourConnectedComponent =
 
 ##### Server render
 
-*Data loads synchronously. After a 2 second wait this markup is rendered*
+*Data loads synchronously. After a 2 second wait this markup is rendered and returned*
 
 ```html
 <div>Loaded: This can be any data from anywhere</div>
