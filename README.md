@@ -4,7 +4,7 @@
 
 #### Bind a function to your component to load the data it needs.
 
-###### Works on both server and client render.
+#### Works on both server and client render.
 ---
 
 #### Example
@@ -37,13 +37,13 @@ const YourConnectedComponent =
 *The component renders immediately while data loads asynchronously*
 
 ```html
-  <div>Loading...</div>
+<div>Loading...</div>
 ```
 
 *Then 2 seconds later, when the data loads*
 
 ```html
-  <div>Loaded: This can be any data from anywhere</div>
+<div>Loaded: This can be any data from anywhere</div>
 ```
 
 ##### Server render
@@ -51,7 +51,7 @@ const YourConnectedComponent =
 *Data loads synchronously. After a 2 second wait this markup is rendered*
 
 ```html
-  <div>Loaded: This can be any data from anywhere</div>
+<div>Loaded: This can be any data from anywhere</div>
 ```
 
 ---
