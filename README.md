@@ -9,6 +9,8 @@
 
 #### Example
 
+This component loads and displays some data. The data loading logic is declared at the component level, and will run and work as expected on both client *and* server render.
+
 ```jsx
 import { frontloadConnect } from 'react-frontload'
 
@@ -32,27 +34,36 @@ const YourConnectedComponent =
   ))
 ```
 
-##### Client render
-
-*The component renders immediately while data loads asynchronously*
+##### What happens on client render
 
 ```html
+--> component renders immediately, loadData() runs in background
+
 <div>Loading...</div>
-```
 
-*Then 2 seconds later, when the data loads*
+--> 2 seconds later, loadData() finishes, component rerenders
 
-```html
 <div>Loaded: This can be any data from anywhere</div>
 ```
 
-##### Server render
-
-*Data loads synchronously. After a 2 second wait this markup is rendered and returned*
+##### What happens on server render
 
 ```html
+--> Request for page containing YourComponent, loadData() runs
+
+Browser waits for response...
+
+--> loadData() finishes in 2 seconds, server then responds with
+
 <div>Loaded: This can be any data from anywhere</div>
 ```
+
+##### Is any more code required to make this work?
+
+Yes, but it is extremly simple. Only two changes to the surrounding application are required
+
+* The application needs to be wrapped in a `<Frontload>` Provider at the top level.
+* The application's server render logic is wrapped in a `frontloadServerRender` function.
 
 ---
 
