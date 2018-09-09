@@ -1,15 +1,15 @@
 # react-frontload
 
-![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg) [![npm version](https://img.shields.io/npm/v/react-frontload.svg?style=flat)](https://www.npmjs.com/package/react-frontload) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://reactjs.org/docs/how-to-contribute.html#your-first-pull-request)
+[![npm version](https://img.shields.io/npm/v/react-frontload.svg?style=flat)](https://www.npmjs.com/package/react-frontload) ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
 #### Bind a function to your component to load the data it needs.
 
-#### Works on both server and client render.
+###### Works on both server and client render.
 ---
 
 #### Example
 
-```
+```jsx
 import { frontloadConnect } from 'react-frontload'
 
 const YourComponent = (props) => (
@@ -78,7 +78,9 @@ The design phllosophy of the library is that it is both 'Just React' and 'Just J
 
 ---
 
-#### API Reference
+### API Reference
+
+. . .
 
 **frontloadConnect** Higher Order Component
 
@@ -104,7 +106,7 @@ This is the HOC which connects react-frontload and the Component you want to loa
 
   * `onUpdate (boolean) [default true]` Toggles whether or not the frontload function should fire when the Component’s props update on the client.
 
-___
+. . .
 
 **Frontload** Provider Component
 
@@ -115,7 +117,8 @@ ___
 The react-frontload provider Component - it must be an ancestor of **all** Components in the tree that use `frontloadConnect`.
 
 The `noServerRender` prop is a convenience which configures off server rendering for the entire application, if this is what you want, so that the `noServerRender` option does not have to be passed to every `frontloadConnect` HOC.
-___
+
+. . .
 
 **frontloadServerRender** function
 
