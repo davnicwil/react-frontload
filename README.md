@@ -111,21 +111,25 @@ This is the HOC which connects react-frontload and the Component you want to loa
 
 * `options?: { noServerRender: boolean, onMount: boolean, onUpdate: boolean}` The options configure when the frontload function should fire on both client and server.
 
-  * `noServerRender (boolean) [default false]` Toggles whether or not the Component’s frontload function will run on server render.
+  * `noServerRender: boolean [default false]` Toggles whether or not the Component’s frontload function will run on server render.
 
-  * `onMount (boolean) [default true]` Toggles whether or not the frontload function should fire when the Component mounts on the client.
+  * `onMount: boolean [default true]` Toggles whether or not the frontload function should fire when the Component mounts on the client.
 
-  * `onUpdate (boolean) [default true]` Toggles whether or not the frontload function should fire when the Component’s props update on the client.
+  * `onUpdate: boolean [default true]` Toggles whether or not the frontload function should fire when the Component’s props update on the client.
 
 . . .
 
 **Frontload** Provider Component
 
 ```
-<Frontload noServerRender={[boolean] (optional, default false)}>
+<Frontload
+  noServerRender={boolean} // default false
+>
+  {..Application with frontloadConnected components..}
+</Frontload>
 ```
 
-The react-frontload provider Component - it must be an ancestor of **all** Components in the tree that use `frontloadConnect`.
+The react-frontload provider Component - it must be an ancestor of **all** components in the tree that use `frontloadConnect`.
 
 The `noServerRender` prop is a convenience which configures off server rendering for the entire application, if this is what you want, so that the `noServerRender` option does not have to be passed to every `frontloadConnect` HOC.
 
@@ -133,13 +137,13 @@ The `noServerRender` prop is a convenience which configures off server rendering
 
 **frontloadServerRender** function
 
-`frontloadServerRender: (renderMarkup: (dryRun: boolean (optional)) => string)`
+`frontloadServerRender: (renderMarkup: (dryRun?: boolean) => string)`
 
 The `react-frontload` server render wrapper which **must** be used on the server toenable the synchronous data loading on server render that `react-frontload` provides. This is of course not needed if you are not using server rendering in your application.
 
 *Arguments*
 
-  * `renderMarkup: (dryRun: boolean (optional)) => string` A function which performs the ordinary React server rendering logic, returning the server rendered markup. In the majority of cases, this will just be a wrapper for a `ReactDom.renderToString` call.
+  * `renderMarkup: (dryRun?: boolean) => string` A function which performs the ordinary React server rendering logic, returning the server rendered markup. In the majority of cases, this will just be a wrapper for a `ReactDom.renderToString` call.
     * `dryrun: boolean` **You do not and should not need to use this or know about it in the majority of cases**. This is a special parameter for lower-level integration with `react-frontload` server render. Under the hood, `frontloadServerRender` is actually running the `renderMarkup` function twice, as a mechanism to run all the Promises in all the `frontload` functions throughout the application and then actually render the markup again once all those promises have resolved. This double-render may create issues in applications using libraries relying on global scope, so this boolean is passed to give the `renderMarkup` function knowledge of whether this is the first dry run, or the second actual render run. Again, if this is unclear, do not worry about it. In the majority of apps, you should not need to know about or integrate with the workings of `react-frontload` on this level.
 
 You can think of this function as injecting the logic required to make `react-frontload` synchronous data loading work, into your existing application. This is in line with the design goals of the library, i.e. there are no requrements about how your server render function works, and indeed it can work in a completely standard way. As long as it is wrapped with `frontloadServerRender`, it will just work.
