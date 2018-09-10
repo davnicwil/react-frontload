@@ -14,8 +14,8 @@ This component loads and displays some data. The data loading logic is declared 
 ```jsx
 import { frontloadConnect } from 'react-frontload'
 
-const YourComponent = (props) => (
-  <div>{props.data ? 'Loaded: ${props.data} : 'Loading...'}</div>
+const YourComponentPresentation = (props) => (
+  <div>{props.data ? `Loaded: ${props.data}` : 'Loading...'}</div>
 )
 
 const loadData = () => new Promise(resolve => {
@@ -27,10 +27,10 @@ const frontload = async (props) => {
   yourStateManager.updateState(data) // e.g. redux dispatch
 }
 
-const YourConnectedComponent =
+const YourComponent =
   yourStateManager.connectDataPropFromState( // e.g. redux connect
   frontloadConnect(frontload)(
-    YourComponent
+    YourComponentPresentation
   ))
 ```
 
@@ -49,18 +49,18 @@ const YourConnectedComponent =
 ##### What happens on server render
 
 ```html
---> Request for page containing YourComponent, loadData() runs
+--> Browser requests page containing YourComponent, loadData() runs on server
 
 Browser waits for response...
 
---> loadData() finishes in 2 seconds, server then responds with
+--> loadData() finishes in 2 seconds, server renders and responds with
 
 <div>Loaded: This can be any data from anywhere</div>
 ```
 
 ##### Is any more code required to make this work?
 
-Yes, but it is extremly simple. Only two changes to the surrounding application are required
+Yes, but it is extremely simple. Only two changes to the surrounding application are required
 
 * The application needs to be wrapped in a `<Frontload>` Provider at the top level.
 * The application's server render logic is wrapped in a `frontloadServerRender` function.
