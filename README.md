@@ -70,13 +70,15 @@ Yes, but it is extremely simple. Only two changes to the surrounding application
 #### What problem does this solve?
 
 
-In most React applications, you need to load data from an API and dynamically render views based on that data.
+In most React applications, you need to load data from an API and dynamically render components based on that data.
 
-This is simple to implement on the client with the built-in React lifecycle methods. However when you need to server render the components with the same data loaded, things become difficult because React does not (yet) support synchronous render. You cannot wait on anything async running in lifecycle methods before first render, so your data loading logic will not work.
+This is simple to implement on the client with the built-in React lifecycle methods. However when you need to server render the components with the same data loaded, things become difficult because React does not (yet) support asynchronous render. In other words, you cannot wait on anything async running in lifecycle methods before the first render happens, so your data loading logic in lifecycle methods will not work on the server.
 
-There are a few patterns for solving this, but they all ultimately involve hoisting your data loading logic away from your component and binding it back to your component in some way to run via separate mechanisms on client and server. Writing this logic manually is tedious and error prone, and even when done correctly, introduces a level of diversion that makes code harder to understand.
+There are a few patterns for solving this, but they all ultimately involve hoisting your data loading logic away from your component and binding it back to your component in some way, so that it can be run via separate mechanisms on client and server. Often, to make things more managable, data loading is hoisted all the way up to umbrella parent components such as routes, making it difficult to determine which data is needed by which component under that route. Furthermore, any server-rendered data is often immediately and wastefully reloaded on the client, unless this case is explicitly handled.
 
-`react-frontload` solves the problem, allowing you to write one function **on the component itself** that loads any data the component needs, which runs asynchronously on the client (so that you can display a loader whilst data is loading in the background) and synchronously on the server (so that your asynchronously loaded data is always included in the server render).
+Writing all this logic manually is tedious and error prone, and even when done correctly, introduces a level of diversion that makes code harder to understand.
+
+`react-frontload` solves the problem, allowing you to write one function **colocated with the component itself** that loads any data the component needs. `react-frontload` takes care of running the function asynchronously on the client and 'synchronously' on the server, and not reloading data on client render when it knows that it was just loaded by the server render, so you don't ever have to think about these details. You just need to focus on your component's data, and how to load it.
 
 The design phllosophy of the library is that it is both 'Just React' and 'Just Javascript'. To integrate `react-frontload` you only need to wrap your application with a provider, and you are good to go. It plugs into your existing application via `props` and Promises. As such, it requires no special conventions or interfaces either in your React components or in your API. You are free to design your app however you choose, and use any stack you choose within the React ecosystem. `react-frontload` will work with anything.
 
