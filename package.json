@@ -6,7 +6,10 @@
   "scripts": {
     "build": "npm run test && babel src -d lib",
     "test": "jest",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "example:build-client": "npx webpack --config ./example/webpack/webpack.config.client.js",
+    "example:build-server": "npx webpack --config ./example/webpack/webpack.config.server.js",
+    "example": "npm i && npm run example:build-client && npm run example:build-server && node ./example/build/server.bundle.js;"
   },
   "author": "davnicwil",
   "license": "MIT",
@@ -32,7 +35,11 @@
     "globals": [
       "test",
       "expect",
-      "beforeEach"
+      "beforeEach",
+      "XMLHttpRequest"
+    ],
+    "ignore": [
+      "./example/build/**/*"
     ]
   },
   "dependencies": {
@@ -42,18 +49,28 @@
     "babel-cli": "^6.23.0",
     "babel-eslint": "^8.2.5",
     "babel-jest": "^23.2.0",
+    "babel-loader": "7.1.5",
+    "babel-plugin-styled-components": "1.7.1",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-preset-env": "^1.7.0",
     "babel-preset-es2015": "^6.22.0",
     "babel-preset-react": "^6.23.0",
+    "babel-regenerator-runtime": "6.5.0",
     "enzyme": "^2.7.1",
     "es6-promise": "^4.0.5",
+    "express": "4.16.3",
+    "isomorphic-fetch": "2.2.1",
     "jest": "^23.2.0",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
+    "react-router-dom": "4.3.1",
     "react-test-renderer": "^15.4.2",
+    "serialize-javascript": "1.5.0",
     "sinon": "^6.0.1",
-    "standard": "^11.0.1"
+    "standard": "^11.0.1",
+    "styled-components": "3.4.8",
+    "webpack": "4.19.0",
+    "webpack-cli": "3.1.0"
   },
   "peerDependencies": {
     "react": "^0.14.0 || ^15.0.0 || ^16.0.0"
