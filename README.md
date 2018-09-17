@@ -141,15 +141,21 @@ The `noServerRender` prop is a convenience which configures off server rendering
 
 `frontloadServerRender: (renderMarkup: (dryRun?: boolean) => string)`
 
-The `react-frontload` server render wrapper which **must** be used on the server toenable the synchronous data loading on server render that `react-frontload` provides. This is of course not needed if you are not using server rendering in your application.
+The `react-frontload` server render wrapper which **must** be used on the server to enable the synchronous data loading on server render that `react-frontload` provides. This is of course not needed if you are not using server rendering in your application.
 
 *Arguments*
 
   * `renderMarkup: (dryRun?: boolean) => string` A function which performs the ordinary React server rendering logic, returning the server rendered markup. In the majority of cases, this will just be a wrapper for a `ReactDom.renderToString` call.
     * `dryrun?: boolean` **You do not and should not need to use this or know about it in the majority of cases**. This is an special parameter passed to your `renderMarkup` function for lower-level integration with `react-frontload` server render. Under the hood, `frontloadServerRender` is actually running the `renderMarkup` function twice, as a mechanism to run all the Promises in all the `frontload` functions throughout the application and then actually render the markup again once all those promises have resolved. This double-render may create issues in applications using libraries relying on global scope, so this boolean is passed to give the `renderMarkup` function knowledge of whether this is the first dry run, or the second actual render run. Again, if this is unclear, do not worry about it. In the majority of apps, you should not need to know about or integrate with the workings of `react-frontload` on this level.
 
-You can think of this function as injecting the logic required to make `react-frontload` synchronous data loading work, into your existing application. This is in line with the design goals of the library, i.e. there are no requrements about how your server render function works, and indeed it can work in a completely standard way. As long as it is wrapped with `frontloadServerRender`, it will just work.
+You can think of this function as injecting the logic required to make `react-frontload` synchronous data loading work, into your existing application. This is in line with the design goals of the library, i.e. there are no requirements about how your server render function works, and indeed it can work in a completely standard way. As long as it is wrapped with `frontloadServerRender`, it will just work.
 
-Importantly, this function may go away in future if more powerful mechanisms are introduced for synchronous server render in `React` itself. The way it works under the hood is just a workaround for the lack of this feature in `React` as of now. If you are interested in this, [this thread](https://github.com/facebook/react/issues/1739) contains a lot of info about this topic and is updated with the latest goings-on in this direction.
+Importantly, this function may go away in future if more powerful mechanisms are introduced for synchronous server render in `React` itself. The way it works under the hood is just a workaround for the lack of this feature in `React` as of now.
+
+If you are interested in this:
+
+* [This Gihub Issue thread on the React repo](https://github.com/facebook/react/issues/1739) contains a lot of info about this topic and is updated with the latest goings-on in this direction.
+
+* [This Hacker News thread](https://news.ycombinator.com/item?id=16696063) discusses how the upcoming 'Suspense' API in React could greatly simplify the implementation of 'synchronous' server render, and even possibly replace the need for `react-frontload` in some cases.
 
 ---
