@@ -154,8 +154,8 @@ Importantly, this function may go away in future if more powerful mechanisms are
 
 If you are interested in this:
 
-* [This Gihub Issue thread on the React repo](https://github.com/facebook/react/issues/1739) contains a lot of info about this topic and is updated with the latest goings-on in this direction.
+* [This Gihub Issue](https://github.com/facebook/react/issues/1739) on the React repo contains a lot of info about this topic and is updated with the latest goings-on in this direction.
 
-* [This Hacker News thread](https://news.ycombinator.com/item?id=16696063) discusses how the upcoming 'Suspense' API in React could greatly simplify the implementation of 'synchronous' server render, and even possibly replace the need for `react-frontload` in some cases.
+* [This Hacker News thread](https://news.ycombinator.com/item?id=16696063) discusses how the upcoming React Suspense API could simplify the implementation of 'synchronous' server render, and even possibly replace the need for `react-frontload` in some cases.
 
 ---
