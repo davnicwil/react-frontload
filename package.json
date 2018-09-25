@@ -1,6 +1,6 @@
 {
   "name": "react-frontload",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Bind Async Data Dependencies to React Components",
   "main": "./lib/index.js",
   "scripts": {
