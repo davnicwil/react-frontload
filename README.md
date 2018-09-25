@@ -2,85 +2,86 @@
 
 [![npm version](https://img.shields.io/npm/v/react-frontload.svg?style=flat)](https://www.npmjs.com/package/react-frontload) [![Build Status](https://travis-ci.org/davnicwil/react-frontload.svg?branch=master)](https://travis-ci.org/davnicwil/react-frontload) ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
-#### Bind a function to your component to load the data it needs.
+#### Bind a function to your component to load the data it needs, on both client and server render.
 
-#### Works on both server and client render.
 ---
 
-#### Example
+Here is the [example application](/docs/react-frontload-example-application.md) using **react-frontload** to load data
 
-This component loads and displays some data. The data loading logic is declared at the component level, and will run and work as expected on both client *and* server render.
 
+Client render                   | Server render
+:------------------------------:|:-----------------------------:
+![](/docs/no-server-render.gif) |![](/docs/server-render.gif)
+
+---
+
+* [Quick code example](#quick-code-example)
+* [What problem does this solve](#what-problem-does-this-solve)
+* [API reference](#api-reference)
+
+## Quick code example
 ```jsx
 import { frontloadConnect } from 'react-frontload'
 
-const YourComponentPresentation = (props) => (
-  <div>{props.data ? `Loaded: ${props.data}` : 'Loading...'}</div>
-)
-
-const loadData = () => new Promise(resolve => {
-  setTimeout(() => resolve('This can be any data from anywhere'), 2000)
-})
-
+// async data loading inside frontload function
 const frontload = async (props) => {
-  const data = await loadData()
+  const data = await yourAPI.loadData() // takes 2 seconds
   yourStateManager.updateState(data) // e.g. redux dispatch
 }
 
+// the raw component, which renders a data prop containing the async loaded data
+const Presentation = (props) => (
+  <div>{props.data ? `Loaded: ${props.data}` : 'Loading...'}</div>
+)
+
 const YourComponent =
   yourStateManager.connectDataPropFromState( // e.g. redux connect
-  frontloadConnect(frontload)(
-    YourComponentPresentation
+  frontloadConnect(frontload)( // frontload function bound to component here
+    Presentation
   ))
 ```
 
-##### What happens on client render
-
+##### What happens on client render?
 ```html
---> component renders immediately, loadData() runs in background
+component renders, loadData() starts
+-> <div>Loading...</div>
 
-<div>Loading...</div>
-
---> 2 seconds later, loadData() finishes, component rerenders
-
-<div>Loaded: This can be any data from anywhere</div>
+2 seconds later, loadData() finishes, component rerenders
+-> <div>Loaded: some data</div>
 ```
 
-##### What happens on server render
-
+##### What happens on server render?
 ```html
---> Browser requests page containing YourComponent, loadData() runs on server
+Browser requests page containing YourComponent, loadData() runs on server
+->  Browser waits for response...
 
-Browser waits for response...
-
---> loadData() finishes in 2 seconds, server renders and responds with
-
-<div>Loaded: This can be any data from anywhere</div>
+loadData() runs in 2 seconds, server renders and responds with
+->  <div>Loaded: some data</div>
 ```
 
 ##### Is any more code required to make this work?
 
-Yes, but it is extremely simple. Only two changes to the surrounding application are required
+Yes, but it is extremely simple. Only two changes are required:
 
-* The application needs to be wrapped in a `<Frontload>` Provider at the top level.
-* The application's server render logic is wrapped in a `frontloadServerRender` function.
+* Wrap your application in the `<Frontload>` Provider.
+* Wrap your server render logic with the `frontloadServerRender` function.
 
----
 
-#### What problem does this solve?
+
+## What problem does this solve?
 
 
 In most React applications, you need to load data from an API and dynamically render components based on that data.
 
-This is simple to implement on the client with the built-in React lifecycle methods. However when you need to server render the components with the same data loaded, things become difficult because React does not (yet) support asynchronous render. In other words, you cannot wait on anything async running in lifecycle methods before the first render happens, so your data loading logic in lifecycle methods will not work on the server.
+This is simple to implement on the client with the built-in React lifecycle methods. However when you need to server render components with the same data pre-loaded, things become more difficult because React does not ([yet](https://github.com/facebook/react/issues/1739)) support asynchronous render. This means you can't wait on anything async running in lifecycle methods before the first render happens, so on the server you can't reuse your data loading logic written inside lifecycle methods.
 
-There are a few patterns for solving this, but they all ultimately involve hoisting your data loading logic away from your component and binding it back to your component in some way, so that it can be run via separate mechanisms on client and server. Often, to make things more managable, data loading is hoisted all the way up to umbrella parent components such as routes, making it difficult to determine which data is needed by which component under that route. Furthermore, any server-rendered data is often immediately and wastefully reloaded on the client, unless this case is explicitly handled.
+Patterns do exist for writing data loading functions and binding them to components, for running via separate mechanisms on client and server render, but they involve manual wiring and often doing things like hoisting data loading logic from all components under a route to the parent component of the route, to make things more manageable. Furthermore, you must explictly handle not wastefully reloading data on the client immediately after a server render.
 
-Writing all this logic manually is tedious and error prone, and even when done correctly, introduces a level of diversion that makes code harder to understand.
+`react-frontload` solves the problem. All this wiring is done for you. You can just write one function, colocated with the component, that loads the data the component needs. `react-frontload` takes care of running the function asynchronously on the client and 'synchronously' on the server, i.e. waiting until all data is loaded for all components being rendered, before rendering the final markup and responding.
 
-`react-frontload` solves the problem, allowing you to write one function **colocated with the component itself** that loads any data the component needs. `react-frontload` takes care of running the function asynchronously on the client and 'synchronously' on the server, and not reloading data on client render when it knows that it was just loaded by the server render, so you don't ever have to think about these details. You just need to focus on your component's data, and how to load it.
+It also takes care of not reloading data immediately after a server render, and you can manually configure if the data reloads on client-side component mounts and updates for super fine-grained control, all with a simple declarative configuration on the component.
 
-The design phllosophy of the library is that it is both 'Just React' and 'Just Javascript'. To integrate `react-frontload` you only need to wrap your application with a provider, and you are good to go. It plugs into your existing application via `props` and Promises. As such, it requires no special conventions or interfaces either in your React components or in your API. You are free to design your app however you choose, and use any stack you choose within the React ecosystem. `react-frontload` will work with anything.
+The design phllosophy of the library is that it is both 'Just React' and 'Just Javascript'. It plugs into your existing application via `props` and `Promises`. It therefore requires no special conventions or interfaces either in your React components or in your API. You are free to build your app however you choose, using any stack within the React ecosystem. Even if you have an existing app, `react-frontload` can be integrated into it easily. Just drop it in, and it works.
 
 #### It's still unclear / I'm not convinced
 
@@ -88,16 +89,18 @@ The design phllosophy of the library is that it is both 'Just React' and 'Just J
 
 * [This blog post](https://medium.com/@cereallarceny/server-side-rendering-in-create-react-app-with-all-the-goodies-without-ejecting-4c889d7db25e) by Patrick Cason discusses a real-world example of using `react-frontload` to server-render a React application built with [create-react-app](https://github.com/facebook/create-react-app).
 
+## API Reference
 
----
+* [frontloadConnect](#frontloadConnect)
+* [Frontload](#Frontload)
+* [frontloadServerRender](#frontloadServerRender)
 
-### API Reference
+. . . . . . . . . .
 
-. . .
+#### frontloadConnect
 
-**frontloadConnect** Higher Order Component
 
-```
+```js
 frontloadConnect(
   frontload: (props: Object) => Promise<void>, // frontload function
   options?: { noServerRender: boolean, onMount: boolean, onUpdate: boolean} // frontload options
@@ -119,43 +122,42 @@ This is the HOC which connects react-frontload and the Component you want to loa
 
   * `onUpdate: boolean [default true]` Toggles whether or not the frontload function should fire when the Component’s props update on the client.
 
-. . .
+. . . . . . . . . .
 
-**Frontload** Provider Component
+#### Frontload
 
-```
-<Frontload
-  noServerRender={boolean} // default false
->
-  {..Application with frontloadConnected components..}
+```jsx
+<Frontload noServerRender={boolean}>
+  <YourApplication />
 </Frontload>
 ```
 
 The react-frontload provider Component - it must be an ancestor of **all** components in the tree that use `frontloadConnect`.
 
-The `noServerRender` prop is a convenience which configures off server rendering for the entire application, if this is what you want, so that the `noServerRender` option does not have to be passed to every `frontloadConnect` HOC.
+*Props*
+  * `noServerRender: boolean [default false]` a convenience to turn off server rendering for the entire application, if this is what you want, so that the `noServerRender` option does not have to be passed to every `frontloadConnect` HOC.
 
-. . .
+. . . . . . . . . .
 
-**frontloadServerRender** function
+#### frontloadServerRender
 
-`frontloadServerRender: (renderMarkup: (dryRun?: boolean) => string)`
+```js
+frontloadServerRender: (renderMarkup: (dryRun?: boolean) => string)
+```
 
 The `react-frontload` server render wrapper which **must** be used on the server to enable the synchronous data loading on server render that `react-frontload` provides. This is of course not needed if you are not using server rendering in your application.
 
 *Arguments*
 
   * `renderMarkup: (dryRun?: boolean) => string` A function which performs the ordinary React server rendering logic, returning the server rendered markup. In the majority of cases, this will just be a wrapper for a `ReactDom.renderToString` call.
-    * `dryrun?: boolean` **You do not and should not need to use this or know about it in the majority of cases**. This is an special parameter passed to your `renderMarkup` function for lower-level integration with `react-frontload` server render. Under the hood, `frontloadServerRender` is actually running the `renderMarkup` function twice, as a mechanism to run all the Promises in all the `frontload` functions throughout the application and then actually render the markup again once all those promises have resolved. This double-render may create issues in applications using libraries relying on global scope, so this boolean is passed to give the `renderMarkup` function knowledge of whether this is the first dry run, or the second actual render run. Again, if this is unclear, do not worry about it. In the majority of apps, you should not need to know about or integrate with the workings of `react-frontload` on this level.
+    * `dryRun?: boolean` Used for low-level integration with `react-frontload` server render. Under the hood, `frontloadServerRender` is actually running the `renderMarkup` function twice. It runs the first time to run the `frontload` functions for all components included in the render, then a second time to render the final markup once all data has been loaded into state. As React renders are supposed to pure this usually does not create any issues, but in some applications server renders also include logic, typically from styling libraries etc, that must only be called once per render. This boolean is therefore passed to let your `renderMarkup` function know which type of server render is occuring, so that you can decide to only call such logic once on the second and final server render, for instance.
 
 You can think of this function as injecting the logic required to make `react-frontload` synchronous data loading work, into your existing application. This is in line with the design goals of the library, i.e. there are no requirements about how your server render function works, and indeed it can work in a completely standard way. As long as it is wrapped with `frontloadServerRender`, it will just work.
 
-Importantly, this function may go away in future if more powerful mechanisms are introduced for synchronous server render in `React` itself. The way it works under the hood is just a workaround for the lack of this feature in `React` as of now.
+Importantly, this function may go away in future if more powerful mechanisms are introduced for synchronous server render in React itself. The way it works under the hood is just a workaround for the lack of this feature in React as of now.
 
 If you are interested in this:
 
 * [This Github Issue](https://github.com/facebook/react/issues/1739) on the React repo contains a lot of info about this topic and is updated with the latest goings-on in this direction.
 
 * [This Hacker News thread](https://news.ycombinator.com/item?id=16696063) discusses how the upcoming React Suspense API could simplify the implementation of 'synchronous' server render, and even possibly replace the need for `react-frontload` in some cases.
-
----

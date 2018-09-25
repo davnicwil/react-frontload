@@ -375,20 +375,20 @@ test('v0.0.1: Client render of <App /> with server rendering configured off for 
   })
   // Wait until all mock api calls have completed, then force a third update to render
   // with the content now loaded into the store from the mock api
-  .then((secondRender) => {
-    const thirdRender = secondRender.update()
+    .then((secondRender) => {
+      const thirdRender = secondRender.update()
 
-    // assert dom structure
-    expect(thirdRender.find(Component1)).toHaveLength(1)
-    expect(thirdRender.find(Component2)).toHaveLength(1)
-    expect(thirdRender.find(Component3)).toHaveLength(1)
-    expect(thirdRender.find(Component3WithNoServerRender)).toHaveLength(1)
-    expect(thirdRender.find(Parent)).toHaveLength(2)
-    expect(thirdRender.find(Leaf)).toHaveLength(4)
+      // assert dom structure
+      expect(thirdRender.find(Component1)).toHaveLength(1)
+      expect(thirdRender.find(Component2)).toHaveLength(1)
+      expect(thirdRender.find(Component3)).toHaveLength(1)
+      expect(thirdRender.find(Component3WithNoServerRender)).toHaveLength(1)
+      expect(thirdRender.find(Parent)).toHaveLength(2)
+      expect(thirdRender.find(Leaf)).toHaveLength(4)
 
-    assertStoreIsPopulated(store)
-    assertDataFromStoreIsRendered(thirdRender)
-  })
+      assertStoreIsPopulated(store)
+      assertDataFromStoreIsRendered(thirdRender)
+    })
 })
 
 test('v0.0.1: Server render of <App /> with all mock api call promises resolved', () => {
@@ -578,30 +578,30 @@ test('v0.0.2: Client render of <App /> with frontloads firing api calls based on
 
     return Promise.all([ ...MOCK_API_PROMISES ]).then(() => secondRender)
   })
-  .then((secondRender) => {
-    const thirdRender = secondRender.update()
+    .then((secondRender) => {
+      const thirdRender = secondRender.update()
 
-    // after third render:
-    // Component 1 frontload should run again (configured to run on both mount and update)
-    // Component 2 frontload should run again (configured to only run on update - this is an update)
-    // Component 3 frontload should NOT run (configured to run only on mount - this is an update)
-    expect(MockApi.getA.withArgs('1').callCount).toBe(3)
-    expect(MockApi.getB.withArgs('2').callCount).toBe(2)
-    expect(MockApi.getC.withArgs('3').callCount).toBe(1)
+      // after third render:
+      // Component 1 frontload should run again (configured to run on both mount and update)
+      // Component 2 frontload should run again (configured to only run on update - this is an update)
+      // Component 3 frontload should NOT run (configured to run only on mount - this is an update)
+      expect(MockApi.getA.withArgs('1').callCount).toBe(3)
+      expect(MockApi.getB.withArgs('2').callCount).toBe(2)
+      expect(MockApi.getC.withArgs('3').callCount).toBe(1)
 
-    // Assert all content is loaded and rendered now
-    expect(thirdRender.find(Component1)).toHaveLength(1)
-    expect(thirdRender.find(Component2WithFrontloadOnlyFiringOnUpdate)).toHaveLength(1)
-    expect(thirdRender.find(Component3WithFrontloadOnlyFiringOnMount)).toHaveLength(1)
-    expect(thirdRender.find(Parent)).toHaveLength(2)
-    expect(thirdRender.find(Leaf)).toHaveLength(3)
+      // Assert all content is loaded and rendered now
+      expect(thirdRender.find(Component1)).toHaveLength(1)
+      expect(thirdRender.find(Component2WithFrontloadOnlyFiringOnUpdate)).toHaveLength(1)
+      expect(thirdRender.find(Component3WithFrontloadOnlyFiringOnMount)).toHaveLength(1)
+      expect(thirdRender.find(Parent)).toHaveLength(2)
+      expect(thirdRender.find(Leaf)).toHaveLength(3)
 
-    expect(thirdRender.find(Leaf).at(0).text()).toBe('a 1')
-    expect(thirdRender.find(Leaf).at(1).text()).toBe('b 2')
-    expect(thirdRender.find(Leaf).at(2).text()).toBe('c 3')
+      expect(thirdRender.find(Leaf).at(0).text()).toBe('a 1')
+      expect(thirdRender.find(Leaf).at(1).text()).toBe('b 2')
+      expect(thirdRender.find(Leaf).at(2).text()).toBe('c 3')
 
-    expect(store.a['1']).toEqual({ id: '1', data: 'a 1' })
-    expect(store.b['2']).toEqual({ id: '2', data: 'b 2' })
-    expect(store.c['3']).toEqual({ id: '3', data: 'c 3' })
-  })
+      expect(store.a['1']).toEqual({ id: '1', data: 'a 1' })
+      expect(store.b['2']).toEqual({ id: '2', data: 'b 2' })
+      expect(store.c['3']).toEqual({ id: '3', data: 'c 3' })
+    })
 })

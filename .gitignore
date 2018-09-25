@@ -2,3 +2,7 @@
 
 lib
 node_modules
+server.bundle.js
+server.bundle.js.map
+client.bundle.js
+client.bundle.js.map
