@@ -193,7 +193,7 @@ export const frontloadConnect = (frontload, options = {}) => (component) => (pro
     options={options} />
 )
 
-export const frontloadServerRender = (render, withLogging) => {
+export const frontloadServerRender = (render, withLogging, alternativeRender) => {
   if (process.env.NODE_ENV !== 'production' && withLogging) {
     log('frontloadServerRender info', 'running first render to fill frontload fn queue(s)')
   }
@@ -219,7 +219,7 @@ export const frontloadServerRender = (render, withLogging) => {
       log('frontloadServerRender info', 'Running second render.')
     }
 
-    const output = render(false)
+    const output = typeof alternativeRender === 'function' ? alternativeRender(true) : render(false)
 
     // all queues get filled again on the second render. Just clean them, don't flush them
     cleanQueues()
