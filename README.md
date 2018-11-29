@@ -81,7 +81,7 @@ Patterns do exist for writing data loading functions and binding them to compone
 
 It also takes care of not reloading data immediately after a server render, and you can manually configure if the data reloads on client-side component mounts and updates for super fine-grained control, all with a simple declarative configuration on the component.
 
-The design phllosophy of the library is that it is both 'Just React' and 'Just Javascript'. It plugs into your existing application via `props` and `Promises`. It therefore requires no special conventions or interfaces either in your React components or in your API. You are free to build your app however you choose, using any stack within the React ecosystem. Even if you have an existing app, `react-frontload` can be integrated into it easily. Just drop it in, and it works.
+The design philosophy of the library is that it is both 'Just React' and 'Just Javascript'. It plugs into your existing application via `props` and `Promises`. It requires no special conventions or interfaces either in your React components or in your API. You are free to build your app however you choose, using any stack within the React ecosystem. `react-frontload` can be integrated into an existing app easily. Just drop it in, and it works.
 
 #### It's still unclear / I'm not convinced
 
