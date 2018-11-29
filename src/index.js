@@ -234,3 +234,53 @@ export const frontloadServerRender = (render, withLogging) => {
 
   return rendered
 }
+
+
+export const frontloadServerRenderToStream = (render, withLogging) => {
+  if (process.env.NODE_ENV !== 'production' && withLogging) {
+    log('frontloadServerRender info', 'running first render to fill frontload fn queue(s)')
+  }
+
+  // a first render is required to fill the frontload queue(s) wth the frontload
+  // functions on the components in the subtrees under frontload containers that will be rendered
+  // The result of this first render is useless, and is thrown away, so there is more work than
+  // necessary done here. This could be improved, for example if a future version of react implements something like a
+  // rendering dry-run to walk the component tree without actually doing the render at the end
+  // the true flag here signals that this render is just a "dry-run"
+  return new Promise((resolve) => {
+    return new Promise((resolveInner) => {
+      render(true)
+        .on("data", () => {})
+        .on("end", () => {
+            resolveInner();
+          });
+
+        }).then(()=> {
+          if (process.env.NODE_ENV !== 'production' && withLogging) {
+            log('frontloadServerRender info', 'first render succeeded, frontend fn queue(s) filled')
+            log('frontloadServerRender info', 'flushing frontend fn queue(s) before running second render...')
+          }
+
+          const startFlushAt = withLogging && Date.now()
+
+          flushQueues().then(() => {
+            if (process.env.NODE_ENV !== 'production' && withLogging) {
+              log('frontloadServerRender info', 'flushed frontload fn queue(s) in ' + (Date.now() - startFlushAt) + 'ms');
+              log('frontloadServerRender info', 'Running second render.');
+            }
+        
+            const output = render(false);
+        
+            cleanQueues();
+        
+            if (process.env.NODE_ENV !== 'production' && withLogging) {
+              log('frontloadServerRender info', 'NOTE: as the logs show, the queue(s) are filled by Frontload before the second render, however they are NOT flushed, so the frontload fns DO NOT run twice.');
+              log('frontloadServerRender info', 'second render succeeded. Server rendering is done.');
+            }
+        
+            resolve(output);
+          });
+        })
+
+  })
+}
