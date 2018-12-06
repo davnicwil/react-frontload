@@ -144,9 +144,18 @@ The react-frontload provider Component - it must be an ancestor of **all** compo
 ```js
 frontloadServerRender: (renderMarkup: (dryRun?: boolean) => string)
 ```
-Alternatively, for `renderToNodeStream` use 
+```jsx
+frontloadServerRender(dryRun =>  renderToString(<App />)).then(stringResult => res.write(stringResult));
+```
+Alternatively, for `renderToNodeStream` treat it as you treat `renderToString`, only difference - it will return `NodeJS.ReadableStream` instead of string, so you have to read the stream yourself
 ```js
-frontloadServerRenderToStream: (renderMarkup: (dryRun?: boolean) => NodeJS.ReadableStream)
+frontloadServerRender: (renderMarkup: (dryRun?: boolean) => NodeJS.ReadableStream)
+```
+```jsx
+frontloadServerRender(dryRun =>  renderToNodeStream(<App />)).then(streamResult => {
+    streamResult.on("data", chunk => { res.write(chunk) })
+                .on("end", () => { res.end(); });
+});
 ```
 
 The `react-frontload` server render wrapper which **must** be used on the server to enable the synchronous data loading on server render that `react-frontload` provides. This is of course not needed if you are not using server rendering in your application.
@@ -165,3 +174,4 @@ If you are interested in this:
 * [This Github Issue](https://github.com/facebook/react/issues/1739) on the React repo contains a lot of info about this topic and is updated with the latest goings-on in this direction.
 
 * [This Hacker News thread](https://news.ycombinator.com/item?id=16696063) discusses how the upcoming React Suspense API could simplify the implementation of 'synchronous' server render, and even possibly replace the need for `react-frontload` in some cases.
+p
