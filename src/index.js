@@ -273,6 +273,4 @@ export const frontloadServerRender = (render, withLogging) => {
         })
 
   })
-
-  
 }
