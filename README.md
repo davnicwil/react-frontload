@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/react-frontload.svg?style=flat)](https://www.npmjs.com/package/react-frontload) [![Build Status](https://travis-ci.org/davnicwil/react-frontload.svg?branch=master)](https://travis-ci.org/davnicwil/react-frontload) ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
-#### Load data asynchronously into your React component. Works on both client and server render.
+#### Load data asynchronously into your React components. Works on both client and server render.
 
 ---
 
@@ -111,7 +111,7 @@ This is the HOC which connects react-frontload and the Component you want to loa
 
 *Arguments*
 
-* `frontload: (props: Object) => Promise<void>` The function which loads your component's data. Takes any props you pass to the component, and returns a Promise which **must** resolve when all required data-loading is complete.
+* `frontload: (props: Object) => Promise<void>` The function which loads your Component's data. Takes any props you pass to the component, and returns a Promise which **must** resolve when all required data-loading is complete.
 
 
 * `options?: { noServerRender: boolean, onMount: boolean, onUpdate: boolean}` The options configure when the frontload function should fire on both client and server.
