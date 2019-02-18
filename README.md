@@ -44,10 +44,10 @@ const YourComponent =
 ##### What happens on client render?
 ```html
 component renders, loadData() starts
--> <div>Loading...</div>
+->  <div>Loading...</div>
 
 2 seconds later, loadData() finishes, component rerenders
--> <div>Loaded: some data</div>
+->  <div>Loaded: some data</div>
 ```
 
 ##### What happens on server render?

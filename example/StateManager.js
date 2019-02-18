@@ -1,7 +1,7 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 
-const cleanState = () => ({ todos: null, todo: null })
+const cleanState = () => ({ todos: null, todo: {} })
 
 class Client extends React.Component {
   constructor (props) {
