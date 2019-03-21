@@ -198,8 +198,8 @@ export const frontloadConnect = (frontload, options = {}) => (component) => (pro
 
 export const frontloadServerRender = (render, withLogging) => {
   // used to trace parallel renders in logging, in case of bugs
-  const renderId = process.env.NODE_ENV !== 'production' && withLogging
-    ? Math.floor(Math.random() * 10000)
+  const renderId = (process.env.NODE_ENV !== 'production' && withLogging)
+    ? Math.floor(Math.random() * 100000000)
     : null
 
   const frontloadQueues = []
