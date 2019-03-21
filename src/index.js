@@ -1,8 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-let FRONTLOAD_QUEUES = []
-
 const LIFECYCLE_PHASES = {
   MOUNT: 0,
   UPDATE: 1
@@ -17,14 +15,6 @@ const autoDetectIsServer = () => (
   !window.document ||
   !window.document.createElement
 )
-
-const cleanQueues = (index) => {
-  if (index === undefined) {
-    FRONTLOAD_QUEUES = []
-  } else {
-    FRONTLOAD_QUEUES[index] = []
-  }
-}
 
 const map = (arr, fn) => {
   const mapped = []
@@ -42,11 +32,11 @@ const waitForAllToComplete = (promises) => (
   )))
 )
 
-function flushQueues (index, options = {}) {
-  if (index === undefined) return Promise.all(map(FRONTLOAD_QUEUES, (_, i) => flushQueues(i)))
+function flushQueues (frontloadQueues, index, options = {}) {
+  if (index === undefined) return Promise.all(map(frontloadQueues, (_, i) => flushQueues(frontloadQueues, i, options)))
 
   const frontloadPromises = []
-  const queue = FRONTLOAD_QUEUES[index]
+  const queue = frontloadQueues[index]
 
   for (let i = 0; i < queue.length; i++) {
     const frontload = queue[i]
@@ -61,7 +51,7 @@ function flushQueues (index, options = {}) {
     }
   }
 
-  cleanQueues(index)
+  frontloadQueues[index] = []
 
   return waitForAllToComplete(frontloadPromises)
 }
@@ -83,7 +73,7 @@ export class Frontload extends React.Component {
         pushFrontload: (frontload, options, lifecylePhase, childProps, logMessage) => {
           const isMount = lifecylePhase === LIFECYCLE_PHASES.MOUNT
           const isUpdate = lifecylePhase === LIFECYCLE_PHASES.UPDATE
-          const queue = FRONTLOAD_QUEUES[this.queueIndex]
+          const queue = this.props.context.frontloadQueues[this.queueIndex]
           const noServerRender = this.props.noServerRender || options.noServerRender
 
           // if on server, and noServerRender is configured globally or locally
@@ -131,7 +121,14 @@ export class Frontload extends React.Component {
       ? autoDetectIsServer()
       : props.isServer
 
-    this.queueIndex = FRONTLOAD_QUEUES.push([]) - 1
+    if (this.isServer) {
+      // ensure that the context is plugged in by failing immediately if it's not the case
+      if (!isValidContext(props.context)) {
+        throw new Error('For frontloadServerRender to work you must supply context as a prop to the <Frontload /> provider in the passed render function\n\ne.g.\n\nconst render = (dryRun, context) => (\n  renderToString(() => <Frontload context={context} />)\n)\n\n')
+      }
+
+      this.queueIndex = props.context.frontloadQueues.push([]) - 1
+    }
 
     // hook for first ever render on client
     // by default, no frontloads are run on first render, because it is assumed that server rendering is being used
@@ -156,6 +153,12 @@ export class Frontload extends React.Component {
   }
 }
 
+function isValidContext (candidate) {
+  return candidate &&
+    candidate.frontloadQueues &&
+    candidate.frontloadQueues.constructor === Array
+}
+
 class FrontloadConnectedComponent extends React.Component {
   static contextTypes = {
     frontload: PropTypes.object
@@ -172,7 +175,7 @@ class FrontloadConnectedComponent extends React.Component {
     }
   }
 
-  pushFrontload = (lifecyclePhase, isServer) => () => {
+  pushFrontload = (lifecyclePhase) => () => {
     const logMessage = (process.env.NODE_ENV !== 'production')
       ? null
       : `for component: [${this.props.component.displayName || 'anonymous'}] on [${(lifecyclePhase === LIFECYCLE_PHASES.MOUNT) ? 'mount' : 'update'}]`
@@ -194,8 +197,15 @@ export const frontloadConnect = (frontload, options = {}) => (component) => (pro
 )
 
 export const frontloadServerRender = (render, withLogging) => {
+  // used to trace parallel renders in logging, in case of bugs
+  const renderId = process.env.NODE_ENV !== 'production' && withLogging
+    ? Math.floor(Math.random() * 10000)
+    : null
+
+  const frontloadQueues = []
+
   if (process.env.NODE_ENV !== 'production' && withLogging) {
-    log('frontloadServerRender info', 'running first render to fill frontload fn queue(s)')
+    log('frontloadServerRender info', `[${renderId}] running first render to fill frontload fn queue(s)`)
   }
 
   // a first render is required to fill the frontload queue(s) wth the frontload
@@ -204,29 +214,26 @@ export const frontloadServerRender = (render, withLogging) => {
   // necessary done here. This could be improved, for example if a future version of react implements something like a
   // rendering dry-run to walk the component tree without actually doing the render at the end
   // the true flag here signals that this render is just a "dry-run"
-  render(true)
+  render(true, { frontloadQueues })
 
   if (process.env.NODE_ENV !== 'production' && withLogging) {
-    log('frontloadServerRender info', 'first render succeeded, frontend fn queue(s) filled')
-    log('frontloadServerRender info', 'flushing frontend fn queue(s) before running second render...')
+    log('frontloadServerRender info', `[${renderId}] first render succeeded, frontend fn queue(s) filled`)
+    log('frontloadServerRender info', `[${renderId}] flushing frontend fn queue(s) before running second render...`)
   }
 
   const startFlushAt = withLogging && Date.now()
 
-  const rendered = flushQueues().then(() => {
+  const rendered = flushQueues(frontloadQueues).then(() => {
     if (process.env.NODE_ENV !== 'production' && withLogging) {
-      log('frontloadServerRender info', `flushed frontload fn queue(s) in ${Date.now() - startFlushAt}ms`)
-      log('frontloadServerRender info', 'Running second render.')
+      log('frontloadServerRender info', `[${renderId}] flushed frontload fn queue(s) in ${Date.now() - startFlushAt}ms`)
+      log('frontloadServerRender info', `[${renderId}] Running second render.`)
     }
 
-    const output = render(false)
-
-    // all queues get filled again on the second render. Just clean them, don't flush them
-    cleanQueues()
+    const output = render(false, { frontloadQueues })
 
     if (process.env.NODE_ENV !== 'production' && withLogging) {
-      log('frontloadServerRender info', 'NOTE: as the logs show, the queue(s) are filled by Frontload before the second render, however they are NOT flushed, so the frontload fns DO NOT run twice.')
-      log('frontloadServerRender info', 'second render succeeded. Server rendering is done.')
+      log('frontloadServerRender info', `[${renderId}] NOTE: as the logs show, the queue(s) are filled by Frontload before the second render, however they are NOT flushed, so the frontload fns DO NOT run twice.`)
+      log('frontloadServerRender info', `[${renderId}] second render succeeded. Server rendering is done.`)
     }
 
     return output

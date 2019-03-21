@@ -30,13 +30,13 @@ const sinonSandbox = sinon.createSandbox()
 
 const MockApi = {
   getA: sinonSandbox.spy((id, mockRestricted) => (
-    mockApiCall({ value: { id, data: `a ${id}` }, delay: randomLatency(200, 500), fail: mockRestricted && 401 })
+    mockApiCall({ value: { id, data: `a ${id}` }, delay: randomLatency(0, 3000), fail: mockRestricted && 401 })
   )),
   getB: sinonSandbox.spy((id, mockRestricted) => (
-    mockApiCall({ value: { id, data: `b ${id}` }, delay: randomLatency(200, 500), fail: mockRestricted && 401 })
+    mockApiCall({ value: { id, data: `b ${id}` }, delay: randomLatency(0, 3000), fail: mockRestricted && 401 })
   )),
   getC: sinonSandbox.spy((id, mockRestricted) => (
-    mockApiCall({ value: { id, data: `c ${id}` }, delay: randomLatency(200, 500), fail: mockRestricted && 401 })
+    mockApiCall({ value: { id, data: `c ${id}` }, delay: randomLatency(0, 3000), fail: mockRestricted && 401 })
   ))
 }
 
@@ -394,8 +394,8 @@ test('v0.0.1: Client render of <App /> with server rendering configured off for 
 test('v0.0.1: Server render of <App /> with all mock api call promises resolved', () => {
   const store = buildCleanStore()
 
-  const App = () => (
-    <Frontload isServer >
+  const App = (props) => (
+    <Frontload context={props.context} isServer >
       <Component1 entityId='1' store={store} >
         <Component3 entityId='2' store={store} />
         <Component2 entityId='3' store={store} >
@@ -405,8 +405,8 @@ test('v0.0.1: Server render of <App /> with all mock api call promises resolved'
     </Frontload>
   )
 
-  return frontloadServerRender(() => (
-    render(<App />)
+  return frontloadServerRender((dryRun, context) => (
+    render(<App context={context} />)
   )).then((serverRenderedMarkup) => {
     expect(MockApi.getA.withArgs('1').callCount).toBe(1)
     expect(MockApi.getB.withArgs('3').callCount).toBe(1)
@@ -422,8 +422,8 @@ test('v0.0.1: Server render of <App /> with all mock api call promises resolved'
 test('v0.0.1: Server render of <App /> with 2 mock api call promises resolved and 2 rejected', () => {
   const store = buildCleanStore()
 
-  const App = () => (
-    <Frontload isServer >
+  const App = (props) => (
+    <Frontload context={props.context} isServer >
       <Component1 entityId='1' store={store} >
         <Component3 entityId='2' store={store} mockRestrictedEntity />
         <Component2 entityId='3' store={store} mockRestrictedEntity >
@@ -433,8 +433,8 @@ test('v0.0.1: Server render of <App /> with 2 mock api call promises resolved an
     </Frontload>
   )
 
-  return frontloadServerRender(() => (
-    render(<App />)
+  return frontloadServerRender((dryRun, context) => (
+    render(<App context={context} />)
   )).then((serverRenderedMarkup) => {
     expect(MockApi.getA.withArgs('1').callCount).toBe(1)
     expect(MockApi.getB.withArgs('3', true).callCount).toBe(1)
@@ -450,8 +450,8 @@ test('v0.0.1: Server render of <App /> with 2 mock api call promises resolved an
 test('v0.0.1: Server render of <App /> with server rendering configured off globally', () => {
   const store = buildCleanStore()
 
-  const App = () => (
-    <Frontload isServer noServerRender >
+  const App = (props) => (
+    <Frontload context={props.context} isServer noServerRender >
       <Component1 entityId='1' store={store} >
         <Component3 entityId='2' store={store} />
         <Component2 entityId='3' store={store} >
@@ -461,8 +461,8 @@ test('v0.0.1: Server render of <App /> with server rendering configured off glob
     </Frontload>
   )
 
-  return frontloadServerRender(() => (
-    render(<App />)
+  return frontloadServerRender((dryRun, context) => (
+    render(<App context={context} />)
   )).then((serverRenderedMarkup) => {
     expect(MockApi.getA.withArgs('1').callCount).toBe(0)
     expect(MockApi.getB.withArgs('3').callCount).toBe(0)
@@ -478,8 +478,8 @@ test('v0.0.1: Server render of <App /> with server rendering configured off glob
 test('v0.0.1: Server render of <App /> with server rendering configured off for one component', () => {
   const store = buildCleanStore()
 
-  const App = () => (
-    <Frontload isServer >
+  const App = (props) => (
+    <Frontload context={props.context} isServer >
       <Component1 entityId='1' store={store} >
         <Component3 entityId='2' store={store} />
         <Component2 entityId='3' store={store} >
@@ -489,8 +489,8 @@ test('v0.0.1: Server render of <App /> with server rendering configured off for 
     </Frontload>
   )
 
-  return frontloadServerRender(() => (
-    render(<App />)
+  return frontloadServerRender((dryRun, context) => (
+    render(<App context={context} />)
   )).then((serverRenderedMarkup) => {
     expect(MockApi.getA.withArgs('1').callCount).toBe(1)
     expect(MockApi.getB.withArgs('3').callCount).toBe(1)
@@ -604,4 +604,40 @@ test('v0.0.2: Client render of <App /> with frontloads firing api calls based on
       expect(store.b['2']).toEqual({ id: '2', data: 'b 2' })
       expect(store.c['3']).toEqual({ id: '3', data: 'c 3' })
     })
+})
+
+test.only('server render in parallel (bugfix introduced in v0.0.4, should have worked since v0.0.1)', () => {
+  const testServerRender = async () => {
+    let store = buildCleanStore()
+
+    const App = (props) => (
+      <Frontload context={props.context} isServer >
+        {/*  onlyRenderChildrenWhenDataLoaded prop means that children only load once Component1's frontload has resolved with data */}
+        <Component1 entityId='1' store={store} >
+          <Component3 entityId='2' store={store} />
+          <Component2 entityId='3' store={store} >
+            <Component3 entityId='4' store={store} />
+          </Component2>
+        </Component1>
+      </Frontload>
+    )
+
+    return frontloadServerRender((dryRun, context) => (
+      render(<App context={context} />)
+    )).then((serverRenderedMarkup) => {
+      assertServerRenderedMarkupStructureIsAsExpected(serverRenderedMarkup)
+      assertStoreIsPopulated(store)
+      assertDataFromStoreIsRenderedOnServer(serverRenderedMarkup)
+    })
+  }
+
+  // this number must be large to rigorously verify that there aren't race conditions
+  const NUMBER_OF_PARALLEL_RENDERS = 1024
+  const runs = []
+
+  for (let i = 0; i < NUMBER_OF_PARALLEL_RENDERS; i++) {
+    runs[i] = testServerRender()
+  }
+
+  return Promise.all(runs)
 })
