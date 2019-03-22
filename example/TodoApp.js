@@ -42,8 +42,8 @@ const Routes = ({ stateManager }) => (
   </Layout>
 )
 
-const App = ({ stateManager, initialState }) => (
-  <Frontload log>
+const App = ({ stateManager, initialState, frontloadContext }) => (
+  <Frontload context={frontloadContext} log>
     {stateManager
       ? (
         <Routes stateManager={stateManager} />
@@ -61,9 +61,9 @@ const Client = (props) => (
   </BrowserRouter>
 )
 
-const Server = ({ location, context, stateManager }) => (
-  <StaticRouter location={location} context={context}>
-    <App stateManager={stateManager} />
+const Server = ({ location, routerContext, frontloadContext, stateManager }) => (
+  <StaticRouter location={location} context={routerContext}>
+    <App stateManager={stateManager} frontloadContext={frontloadContext} />
   </StaticRouter>
 )
 

@@ -73,8 +73,12 @@ export class Frontload extends React.Component {
         pushFrontload: (frontload, options, lifecylePhase, childProps, logMessage) => {
           const isMount = lifecylePhase === LIFECYCLE_PHASES.MOUNT
           const isUpdate = lifecylePhase === LIFECYCLE_PHASES.UPDATE
-          const queue = this.props.context.frontloadQueues[this.queueIndex]
           const noServerRender = this.props.noServerRender || options.noServerRender
+
+          // get the queue, if on the server
+          const queue = this.isServer
+            ? this.props.context.frontloadQueues[this.queueIndex]
+            : null
 
           // if on server, and noServerRender is configured globally or locally
           // or if the frontload is configured not to run for this lifecycle phase

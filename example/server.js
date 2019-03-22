@@ -38,18 +38,23 @@ const buildHtml = (serverRenderedMarkup, styleTags, initialState) => `
 
 app.get('/server-render*', async (req, res) => {
   const location = req.url
-  const context = {}
+  const routerContext = {}
   const stateManager = StateManager.Server()
   const sheet = new ServerStyleSheet()
 
   // this is the ordinary synchronous server rendering logic every app should have, wrapped in a function
-  const renderMarkup = (dryRun) => {
+  const renderMarkup = (dryRun, frontloadContext) => {
     console.log(dryRun
       ? `[example app] ${location} - loading data...`
       : `[example app] ${location} - all data loaded, rendering markup...`
     )
 
-    const app = <TodoApp.Server location={location} context={context} stateManager={stateManager} />
+    const app = <TodoApp.Server
+      location={location}
+      frontloadContext={frontloadContext}
+      routerContext={routerContext}
+      stateManager={stateManager}
+    />
 
     const serverRenderedMarkup = dryRun
       ? renderToString(app)
@@ -64,7 +69,7 @@ app.get('/server-render*', async (req, res) => {
   // to enable async server render via react-frontload, just wrap your server render function with frontloadServerRender
   const serverRenderedMarkup = await frontloadServerRender(renderMarkup)
   const end = Date.now()
-  const redirect = context.url
+  const redirect = routerContext.url
 
   if (redirect) {
     console.log(`[example app] ${location} - resolved with redirect to ${redirect}`)
