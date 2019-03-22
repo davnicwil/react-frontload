@@ -137,7 +137,7 @@ The react-frontload provider Component - it must be an ancestor of **all** compo
 #### frontloadServerRender
 
 ```js
-frontloadServerRender: (renderMarkup: (dryRun?: boolean) => string)
+frontloadServerRender: (renderMarkup: (dryRun: boolean, context: Object) => string)
 ```
 
 The `react-frontload` server render wrapper which **must** be used on the server to enable the synchronous data loading on server render that `react-frontload` provides. This is of course not needed if you are not using server rendering in your application.
