@@ -8,7 +8,7 @@ Client render                   | Server render
 :------------------------------:|:-----------------------------:
 ![](/docs/no-server-render.gif) |![](/docs/server-render.gif)
 
-:point_up The [example application](/docs/react-frontload-example-application.md) using **react-frontload** to load data
+:point_up: The [example application](/docs/react-frontload-example-application.md) using **react-frontload** to load data
 
 * [Quick code example](#quick-code-example)
 * [What problem does this solve](#what-problem-does-this-solve)
