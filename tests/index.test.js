@@ -394,8 +394,8 @@ test('v0.0.1: Client render of <App /> with server rendering configured off for 
 test('v0.0.1: Server render of <App /> with all mock api call promises resolved', () => {
   const store = buildCleanStore()
 
-  const App = (props) => (
-    <Frontload context={props.context} isServer >
+  const App = () => (
+    <Frontload isServer >
       <Component1 entityId='1' store={store} >
         <Component3 entityId='2' store={store} />
         <Component2 entityId='3' store={store} >
@@ -405,8 +405,8 @@ test('v0.0.1: Server render of <App /> with all mock api call promises resolved'
     </Frontload>
   )
 
-  return frontloadServerRender((dryRun, context) => (
-    render(<App context={context} />)
+  return frontloadServerRender((dryRun) => (
+    render(<App />)
   )).then((serverRenderedMarkup) => {
     expect(MockApi.getA.withArgs('1').callCount).toBe(1)
     expect(MockApi.getB.withArgs('3').callCount).toBe(1)
@@ -422,8 +422,8 @@ test('v0.0.1: Server render of <App /> with all mock api call promises resolved'
 test('v0.0.1: Server render of <App /> with 2 mock api call promises resolved and 2 rejected', () => {
   const store = buildCleanStore()
 
-  const App = (props) => (
-    <Frontload context={props.context} isServer >
+  const App = () => (
+    <Frontload isServer >
       <Component1 entityId='1' store={store} >
         <Component3 entityId='2' store={store} mockRestrictedEntity />
         <Component2 entityId='3' store={store} mockRestrictedEntity >
@@ -433,8 +433,8 @@ test('v0.0.1: Server render of <App /> with 2 mock api call promises resolved an
     </Frontload>
   )
 
-  return frontloadServerRender((dryRun, context) => (
-    render(<App context={context} />)
+  return frontloadServerRender((dryRun) => (
+    render(<App />)
   )).then((serverRenderedMarkup) => {
     expect(MockApi.getA.withArgs('1').callCount).toBe(1)
     expect(MockApi.getB.withArgs('3', true).callCount).toBe(1)
@@ -450,8 +450,8 @@ test('v0.0.1: Server render of <App /> with 2 mock api call promises resolved an
 test('v0.0.1: Server render of <App /> with server rendering configured off globally', () => {
   const store = buildCleanStore()
 
-  const App = (props) => (
-    <Frontload context={props.context} isServer noServerRender >
+  const App = () => (
+    <Frontload isServer noServerRender >
       <Component1 entityId='1' store={store} >
         <Component3 entityId='2' store={store} />
         <Component2 entityId='3' store={store} >
@@ -461,8 +461,8 @@ test('v0.0.1: Server render of <App /> with server rendering configured off glob
     </Frontload>
   )
 
-  return frontloadServerRender((dryRun, context) => (
-    render(<App context={context} />)
+  return frontloadServerRender((dryRun) => (
+    render(<App />)
   )).then((serverRenderedMarkup) => {
     expect(MockApi.getA.withArgs('1').callCount).toBe(0)
     expect(MockApi.getB.withArgs('3').callCount).toBe(0)
@@ -478,8 +478,8 @@ test('v0.0.1: Server render of <App /> with server rendering configured off glob
 test('v0.0.1: Server render of <App /> with server rendering configured off for one component', () => {
   const store = buildCleanStore()
 
-  const App = (props) => (
-    <Frontload context={props.context} isServer >
+  const App = () => (
+    <Frontload isServer >
       <Component1 entityId='1' store={store} >
         <Component3 entityId='2' store={store} />
         <Component2 entityId='3' store={store} >
@@ -489,8 +489,8 @@ test('v0.0.1: Server render of <App /> with server rendering configured off for 
     </Frontload>
   )
 
-  return frontloadServerRender((dryRun, context) => (
-    render(<App context={context} />)
+  return frontloadServerRender((dryRun) => (
+    render(<App />)
   )).then((serverRenderedMarkup) => {
     expect(MockApi.getA.withArgs('1').callCount).toBe(1)
     expect(MockApi.getB.withArgs('3').callCount).toBe(1)
@@ -610,8 +610,8 @@ test.only('server render in parallel (bugfix introduced in v0.0.4, should have w
   const testServerRender = async () => {
     let store = buildCleanStore()
 
-    const App = (props) => (
-      <Frontload context={props.context} isServer >
+    const App = () => (
+      <Frontload isServer >
         {/*  onlyRenderChildrenWhenDataLoaded prop means that children only load once Component1's frontload has resolved with data */}
         <Component1 entityId='1' store={store} >
           <Component3 entityId='2' store={store} />
@@ -622,8 +622,8 @@ test.only('server render in parallel (bugfix introduced in v0.0.4, should have w
       </Frontload>
     )
 
-    return frontloadServerRender((dryRun, context) => (
-      render(<App context={context} />)
+    return frontloadServerRender((dryRun) => (
+      render(<App />)
     )).then((serverRenderedMarkup) => {
       assertServerRenderedMarkupStructureIsAsExpected(serverRenderedMarkup)
       assertStoreIsPopulated(store)
