@@ -6,7 +6,7 @@
 
 > A bug which caused issues with multiple server renders happening in parallel was fixed in v1.0.5.
 
-> **Upgrade immediately to v1.0.5**! It has the same API as previous versions, so should just work with your existing code, however it requires that you are running node at version 8.0.0 or above. Node 8+ is now a hard requirement for using react-frontload - this decision was made because node 8+ has features that allow react-frontload to abstract certain internals away from the user and keep the API simple. I think this was probably the best compromise for the most users, since node 10 is now in LTS, but if you have feedback on this and want me to change it to support earlier versions of node, please let me know in issues!
+> **Upgrade immediately to v1.0.5**! It has the same API as previous versions, so should just work with your existing code, however it requires that you are running node at version 8.0.0 or above. Node 8+ is now a hard requirement for using react-frontload - this decision was made because node 8+ has features that allow react-frontload to abstract certain internals away from the user and keep the API simple. I think this was probably the best compromise for the most users, since node 10 is now in LTS. If this creates problems for existing users, different APIs can be added that support older versions of node, but this won't be done unless people ask for it - please file an issue if you need this.
 
 Client render                   | Server render
 :------------------------------:|:-----------------------------:
