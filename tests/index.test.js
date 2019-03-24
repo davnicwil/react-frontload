@@ -606,7 +606,7 @@ test('v0.0.2: Client render of <App /> with frontloads firing api calls based on
     })
 })
 
-test.only('server render in parallel (bugfix introduced in v0.0.4, should have worked since v0.0.1)', () => {
+test.only('server render in parallel (bugfix introduced in v1.0.5)', () => {
   const testServerRender = async () => {
     let store = buildCleanStore()
 
