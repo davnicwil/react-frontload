@@ -43,7 +43,7 @@ app.get('/server-render*', async (req, res) => {
   const sheet = new ServerStyleSheet()
 
   // this is the ordinary synchronous server rendering logic every app should have, wrapped in a function
-  const renderMarkup = (dryRun, frontloadContext) => {
+  const renderMarkup = (dryRun) => {
     console.log(dryRun
       ? `[example app] ${location} - loading data...`
       : `[example app] ${location} - all data loaded, rendering markup...`
@@ -51,7 +51,6 @@ app.get('/server-render*', async (req, res) => {
 
     const app = <TodoApp.Server
       location={location}
-      frontloadContext={frontloadContext}
       routerContext={routerContext}
       stateManager={stateManager}
     />

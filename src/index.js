@@ -6,15 +6,60 @@ const LIFECYCLE_PHASES = {
   UPDATE: 1
 }
 
+const FRONTLOAD_QUEUES = {}
+const ASYNC_CONTEXTS = {}
+
 const log = (process.env.NODE_ENV !== 'production') && ((name, message) => {
   console.log(`[react-frontload]${name ? ` [${name}]` : ''} ${message}`)
 })
 
-const autoDetectIsServer = () => (
+const IS_SERVER =
   typeof window === 'undefined' ||
   !window.document ||
   !window.document.createElement
-)
+
+let asyncHooks
+
+function initAsyncHooks () {
+  if (asyncHooks) {
+    return
+  }
+
+  asyncHooks = require('async_hooks')
+
+  asyncHooks.createHook({
+    init: (asyncId, type, triggerAsyncId) => {
+      if (ASYNC_CONTEXTS[triggerAsyncId]) {
+        ASYNC_CONTEXTS[asyncId] = ASYNC_CONTEXTS[triggerAsyncId]
+      }
+    },
+    // clean up memory
+    destroy: (asyncId) => {
+      delete ASYNC_CONTEXTS[asyncId]
+    }
+  }).enable()
+}
+
+function withAsyncContext (cb) {
+  const asyncResource = new asyncHooks.AsyncResource('REQUEST_CONTEXT')
+  return asyncResource.runInAsyncScope(() => {
+    const asyncId = asyncHooks.executionAsyncId()
+    ASYNC_CONTEXTS[asyncId] = asyncId
+
+    return cb(ASYNC_CONTEXTS[asyncId])
+  })
+}
+
+function getFrontloadQueuesForCurrentRender () {
+  const currentExecutionAsyncId = asyncHooks.executionAsyncId()
+  const asyncId = ASYNC_CONTEXTS[currentExecutionAsyncId]
+
+  if (!asyncId) {
+    throw Error('Could not find async context for current async execution id ' + currentExecutionAsyncId)
+  }
+
+  return FRONTLOAD_QUEUES[asyncId]
+}
 
 const map = (arr, fn) => {
   const mapped = []
@@ -32,8 +77,10 @@ const waitForAllToComplete = (promises) => (
   )))
 )
 
-function flushQueues (frontloadQueues, index, options = {}) {
-  if (index === undefined) return Promise.all(map(frontloadQueues, (_, i) => flushQueues(frontloadQueues, i, options)))
+function flushQueues (index, options = {}) {
+  const frontloadQueues = getFrontloadQueuesForCurrentRender()
+
+  if (index === undefined) return Promise.all(map(frontloadQueues, (_, i) => flushQueues(i, options)))
 
   const frontloadPromises = []
   const queue = frontloadQueues[index]
@@ -77,7 +124,7 @@ export class Frontload extends React.Component {
 
           // get the queue, if on the server
           const queue = this.isServer
-            ? this.props.context.frontloadQueues[this.queueIndex]
+            ? getFrontloadQueuesForCurrentRender()[this.queueIndex]
             : null
 
           // if on server, and noServerRender is configured globally or locally
@@ -121,17 +168,12 @@ export class Frontload extends React.Component {
   constructor (props, context) {
     super(props, context)
 
-    this.isServer = (props.isServer === undefined)
-      ? autoDetectIsServer()
+    this.isServer = props.isServer === undefined
+      ? IS_SERVER
       : props.isServer
 
     if (this.isServer) {
-      // ensure that the context is plugged in by failing immediately if it's not the case
-      if (!isValidContext(props.context)) {
-        throw new Error('For frontloadServerRender to work you must supply context as a prop to the <Frontload /> provider in the passed render function\n\ne.g.\n\nconst render = (dryRun, context) => (\n  renderToString(() => <Frontload context={context} />)\n)\n\n')
-      }
-
-      this.queueIndex = props.context.frontloadQueues.push([]) - 1
+      this.queueIndex = getFrontloadQueuesForCurrentRender().push([]) - 1
     }
 
     // hook for first ever render on client
@@ -155,12 +197,6 @@ export class Frontload extends React.Component {
   render () {
     return React.Children.only(this.props.children)
   }
-}
-
-function isValidContext (candidate) {
-  return candidate &&
-    candidate.frontloadQueues &&
-    candidate.frontloadQueues.constructor === Array
 }
 
 class FrontloadConnectedComponent extends React.Component {
@@ -200,48 +236,58 @@ export const frontloadConnect = (frontload, options = {}) => (component) => (pro
     options={options} />
 )
 
+if (IS_SERVER) {
+  initAsyncHooks()
+}
+
 export const frontloadServerRender = (render, withLogging) => {
-  // used to trace parallel renders in logging, in case of bugs
-  const renderId = (process.env.NODE_ENV !== 'production' && withLogging)
-    ? Math.floor(Math.random() * 100000000)
-    : null
-
-  const frontloadQueues = []
-
-  if (process.env.NODE_ENV !== 'production' && withLogging) {
-    log('frontloadServerRender info', `[${renderId}] running first render to fill frontload fn queue(s)`)
+  // this is usually a no-op as async hooks have already been initialised
+  // if IS_SERVER is true, but for tests this won't be the case as jest
+  // provides a window object, so just do this for testing
+  // the production check will ensure gets removed from production builds anyway,
+  // so this while being a hack isn't actually that terrible
+  if (process.env.NODE_ENV !== 'production') {
+    initAsyncHooks()
   }
 
-  // a first render is required to fill the frontload queue(s) wth the frontload
-  // functions on the components in the subtrees under frontload containers that will be rendered
-  // The result of this first render is useless, and is thrown away, so there is more work than
-  // necessary done here. This could be improved, for example if a future version of react implements something like a
-  // rendering dry-run to walk the component tree without actually doing the render at the end
-  // the true flag here signals that this render is just a "dry-run"
-  render(true, { frontloadQueues })
-
-  if (process.env.NODE_ENV !== 'production' && withLogging) {
-    log('frontloadServerRender info', `[${renderId}] first render succeeded, frontend fn queue(s) filled`)
-    log('frontloadServerRender info', `[${renderId}] flushing frontend fn queue(s) before running second render...`)
-  }
-
-  const startFlushAt = withLogging && Date.now()
-
-  const rendered = flushQueues(frontloadQueues).then(() => {
-    if (process.env.NODE_ENV !== 'production' && withLogging) {
-      log('frontloadServerRender info', `[${renderId}] flushed frontload fn queue(s) in ${Date.now() - startFlushAt}ms`)
-      log('frontloadServerRender info', `[${renderId}] Running second render.`)
-    }
-
-    const output = render(false, { frontloadQueues })
+  return withAsyncContext((asyncId) => {
+    FRONTLOAD_QUEUES[asyncId] = []
 
     if (process.env.NODE_ENV !== 'production' && withLogging) {
-      log('frontloadServerRender info', `[${renderId}] NOTE: as the logs show, the queue(s) are filled by Frontload before the second render, however they are NOT flushed, so the frontload fns DO NOT run twice.`)
-      log('frontloadServerRender info', `[${renderId}] second render succeeded. Server rendering is done.`)
+      log('frontloadServerRender info', `[${asyncId}] running first render to fill frontload fn queue(s)`)
     }
 
-    return output
+    // a first render is required to fill the frontload queue(s) wth the frontload
+    // functions on the components in the subtrees under frontload containers that will be rendered
+    // The result of this first render is useless, and is thrown away, so there is more work than
+    // necessary done here. This could be improved, for example if a future version of react implements something like a
+    // rendering dry-run to walk the component tree without actually doing the render at the end
+    // the true flag here signals that this render is just a "dry-run"
+    render(true)
+
+    if (process.env.NODE_ENV !== 'production' && withLogging) {
+      log('frontloadServerRender info', `[${asyncId}] first render succeeded, frontend fn queue(s) filled`)
+      log('frontloadServerRender info', `[${asyncId}] flushing frontend fn queue(s) before running second render...`)
+    }
+
+    const startFlushAt = withLogging && Date.now()
+
+    return flushQueues().then(() => {
+      if (process.env.NODE_ENV !== 'production' && withLogging) {
+        log('frontloadServerRender info', `[${asyncId}] flushed frontload fn queue(s) in ${Date.now() - startFlushAt}ms`)
+        log('frontloadServerRender info', `[${asyncId}] Running second render.`)
+      }
+
+      const output = render(false)
+
+      if (process.env.NODE_ENV !== 'production' && withLogging) {
+        log('frontloadServerRender info', `[${asyncId}] NOTE: as the logs show, the queue(s) are filled by Frontload before the second render, however they are NOT flushed, so the frontload fns DO NOT run twice.`)
+        log('frontloadServerRender info', `[${asyncId}] second render succeeded. Server rendering is done.`)
+      }
+
+      delete FRONTLOAD_QUEUES[asyncId]
+
+      return output
+    })
   })
-
-  return rendered
 }

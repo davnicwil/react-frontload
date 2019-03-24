@@ -4,6 +4,10 @@
 
 #### Load data asynchronously into your React components. Works on both client and server render.
 
+> A bug which caused issues with multiple server renders happening in parallel was fixed in v1.0.5.
+
+> **Upgrade immediately to v1.0.5**! It has the same API as previous versions, so should just work with your existing code, however it requires that you are running node at version 8.0.0 or above. Node 8+ is now a hard requirement for using react-frontload - this decision was made because node 8+ has features that allow react-frontload to abstract certain internals away from the user and keep the API simple. I think this was probably the best compromise for the most users, since node 10 is now in LTS. If this creates problems for existing users, different APIs can be added that support older versions of node, but this won't be done unless people ask for it - please file an issue if you need this.
+
 Client render                   | Server render
 :------------------------------:|:-----------------------------:
 ![](/docs/no-server-render.gif) |![](/docs/server-render.gif)
@@ -137,18 +141,17 @@ The react-frontload provider Component - it must be an ancestor of **all** compo
 #### frontloadServerRender
 
 ```js
-frontloadServerRender: (renderMarkup: (dryRun: boolean, context: Object) => string)
+frontloadServerRender: (renderMarkup: (dryRun: boolean) => string)
 ```
 
 The `react-frontload` server render wrapper which **must** be used on the server to enable the synchronous data loading on server render that `react-frontload` provides. This is of course not needed if you are not using server rendering in your application.
 
 *Arguments*
 
-  * `renderMarkup: (dryRun: boolean, context: Object) => string` This function acts as the glue between `react-frontload` and your existing server render logic, making async server rendering work. It should return exactly what normal server render code returns - in most cases the output of `ReactDom.renderToString`. The arguments injected into this function are the hooks to make `react-fronload` server rendering work, you use them as follows:
+  * `renderMarkup: (dryRun: boolean) => string` This callback function acts as the glue between `react-frontload` and your existing server render logic, making async server rendering work. It should return exactly what normal server render code returns - in most cases the output of `ReactDom.renderToString`. This function injects an argument for lower-level integration with the render, for apps that need it:
     * `dryRun: boolean` This is a flag used to let you know when the 'final' server render is taking place. `react-frontload` actually runs the server render more than once, as part of its mechanic to make async server rendering work, and some libraries in the React excosystem are built with the assumption that server rendering only occurs once. For instance, `styled-components`, when it generates css on the server. For libraries such as these, you can use this flag to only run the server render parts when it is set `false`, i.e. on the final render.
-    * `context: Object` This is the internal context object used by `react-frontload`, it's required to make async server rendering work - it simply needs to be passed through to the provider like so `<Frontload context={context} ... >`. You don't need to know anything about this object and should not modify it in any way, or depend on its structure in any way (it could change in future releases) it simply allows `frontloadServerRender` to 'see inside' your application. In any case, if you don't pass through `context` then an informative Error will be thrown when `frontloadServerRender` runs.
 
-You can think of this function as injecting the logic required to make `react-frontload` synchronous data loading work, into your existing application. This is in line with the design goals of the library, i.e. there are no requirements about how your server render function works, and indeed it can work in a completely standard way. As long as it is wrapped with `frontloadServerRender`, and `context` is plugged in to the `<Frontload />` provider,  it will just work.
+You can think of this function as injecting the logic required to make `react-frontload` synchronous data loading work, into your existing application. This is in line with the design goals of the library, i.e. there are no requirements about how your server render function works, and indeed it can work in a completely standard way. As long as it is wrapped with `frontloadServerRender`,  it will just work.
 
 Importantly, this function may go away in future if more powerful mechanisms are introduced for synchronous server render in React itself. The way it works under the hood is just a workaround for the lack of this feature in React as of now.
 
