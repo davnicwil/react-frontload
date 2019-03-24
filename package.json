@@ -77,5 +77,8 @@
   },
   "browser": {
     "async_hooks": false
+  },
+  "engines": {
+    "node": ">=8.0.0"
   }
 }
