@@ -4,7 +4,8 @@
 
 #### Load data asynchronously into your React components. Works on both client and server render.
 
-> A critical bug which caused issues with multiple server renders happening in parallel was fixed in v1.0.5. **Upgrade immediately to v1.0.5**! It has the same API as previous versions, so will 'just work'.
+> A bug which caused issues with multiple server renders happening in parallel was fixed in v1.0.5.
+> **Upgrade immediately to v1.0.5**! It has the same API as previous versions, so will just work with your existing code.
 
 Client render                   | Server render
 :------------------------------:|:-----------------------------:
