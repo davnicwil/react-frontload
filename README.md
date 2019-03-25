@@ -4,9 +4,7 @@
 
 #### Load data asynchronously into your React components. Works on both client and server render.
 
-> A bug which caused issues with multiple server renders happening in parallel was fixed in v1.0.5.
-
-> **Upgrade immediately to v1.0.5**! It has the same API as previous versions, so should just work with your existing code, however it requires that you are running node at version 8.0.0 or above. Node 8+ is now a hard requirement for using react-frontload - this decision was made because node 8+ has features that allow react-frontload to abstract certain internals away from the user and keep the API simple. I think this was probably the best compromise for the most users, since node 10 is now in LTS. If this creates problems for existing users, different APIs can be added that support older versions of node, but this won't be done unless people ask for it - please file an issue if you need this.
+> A bug which caused issues with multiple server renders happening in parallel was fixed in v1.0.5. **Everyone using this library should upgrade immediately**! It has the same API as previous versions, so will just work with your existing code, however it requires you have node version 8+. Since node 10 is now in LTS, I'm hoping this won't create any blockers for any existing users, but if so please raise an issue!
 
 Client render                   | Server render
 :------------------------------:|:-----------------------------:
