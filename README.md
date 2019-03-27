@@ -8,7 +8,7 @@
 
 > It has the same API as previous versions, so will just work with your existing code, however it requires you have node version **8.12.0 or above** to work. 
 
-> If you have to run on a node version less than 8.12.0, support for that is being worked on and will come soon. As a workaround, you can in the meantime use v1.0.4, which has the same API that will be added again in a future version. See #26 and #27 for more detail on this.
+> If you have to run on a node version less than 8.12.0, support for that is being worked on and will come soon. As a workaround, you can in the meantime use v1.0.4, which has the same API that will be added again in a future version. See issues #23 and #27 for more detail on this.
 
 Client render                   | Server render
 :------------------------------:|:-----------------------------:
