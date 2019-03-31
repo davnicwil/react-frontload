@@ -8,6 +8,37 @@ const LIFECYCLE_PHASES = {
 
 const FRONTLOAD_QUEUES = {}
 const ASYNC_CONTEXTS = {}
+let IS_NODE_V_8_12_OR_ABOVE = null
+
+function initIsNodeVersion8Dot12OrAbove () {
+  if (IS_NODE_V_8_12_OR_ABOVE === null) {
+    const v = process.version
+
+    const firstDotIndex = v.indexOf('.')
+    const majorVersionNumber = parseInt(v.substr(1, firstDotIndex))
+
+    if (majorVersionNumber === 8) {
+      const secondDotIndex = v.lastIndexOf('.')
+      const minorVersionNumber = parseInt(v.substr(firstDotIndex + 1, secondDotIndex))
+
+      IS_NODE_V_8_12_OR_ABOVE = minorVersionNumber >= 12
+    } else {
+      IS_NODE_V_8_12_OR_ABOVE = majorVersionNumber > 8
+    }
+  }
+
+  return IS_NODE_V_8_12_OR_ABOVE
+}
+
+function mustUseManualContextError () {
+  return Error(
+    `[react-frontload] you are running node @ ${process.version} - ` +
+    `automatic per-render context injection is only supported ` +
+    `from node v8.12.0 and above - you MUST therefore manually pass the 2nd argument 'context'` +
+    `provided by the render callback inside 'reactFrontloadServerRender' through as a prop to ` +
+    `the <Frontload /> provider on the server - please see the documentation for more info on this`
+  )
+}
 
 const log = (process.env.NODE_ENV !== 'production') && ((name, message) => {
   console.log(`[react-frontload]${name ? ` [${name}]` : ''} ${message}`)
@@ -42,6 +73,7 @@ function initAsyncHooks () {
 
 function withAsyncContext (cb) {
   const asyncResource = new asyncHooks.AsyncResource('REQUEST_CONTEXT')
+
   return asyncResource.runInAsyncScope(() => {
     const asyncId = asyncHooks.executionAsyncId()
     ASYNC_CONTEXTS[asyncId] = asyncId
@@ -55,52 +87,10 @@ function getFrontloadQueuesForCurrentRender () {
   const asyncId = ASYNC_CONTEXTS[currentExecutionAsyncId]
 
   if (!asyncId) {
-    throw Error('Could not find async context for current async execution id ' + currentExecutionAsyncId)
+    throw Error('[react-frontload] Could not find async context for current async execution id ' + currentExecutionAsyncId)
   }
 
   return FRONTLOAD_QUEUES[asyncId]
-}
-
-const map = (arr, fn) => {
-  const mapped = []
-  for (let i = 0; i < arr.length; i++) mapped.push(fn(arr[i], i))
-
-  return mapped
-}
-
-// util with same behaviour of Promise.all, except it does not short-circuit
-// to catch if one of the promises rejects. It resolves when all the passed promises
-// have either resolved or rejected
-const waitForAllToComplete = (promises) => (
-  Promise.all(map(promises, (promise) => (
-    promise['catch']((error) => error)
-  )))
-)
-
-function flushQueues (index, options = {}) {
-  const frontloadQueues = getFrontloadQueuesForCurrentRender()
-
-  if (index === undefined) return Promise.all(map(frontloadQueues, (_, i) => flushQueues(i, options)))
-
-  const frontloadPromises = []
-  const queue = frontloadQueues[index]
-
-  for (let i = 0; i < queue.length; i++) {
-    const frontload = queue[i]
-    if (!options.firstClientRender) {
-      frontloadPromises.push(frontload.fn())
-    } else if (options.noServerRender || frontload.options.noServerRender) {
-      if (process.env.NODE_ENV !== 'production' && !!options.log) {
-        options.log(`[1st client render] NOTE running frontload fn for component [${frontload.componentDisplayName}], since noServerRender === true ${options.noServerRender ? 'globally' : 'for this component'}`)
-      }
-
-      frontloadPromises.push(frontload.fn())
-    }
-  }
-
-  frontloadQueues[index] = []
-
-  return waitForAllToComplete(frontloadPromises)
 }
 
 export class Frontload extends React.Component {
@@ -124,7 +114,9 @@ export class Frontload extends React.Component {
 
           // get the queue, if on the server
           const queue = this.isServer
-            ? getFrontloadQueuesForCurrentRender()[this.queueIndex]
+            ? this.props.context
+              ? this.props.context.frontloadQueues[this.queueIndex] // if a context was provided in a prop, use that
+              : getFrontloadQueuesForCurrentRender()[this.queueIndex] // otherwise, must be using automatic context injection
             : null
 
           // if on server, and noServerRender is configured globally or locally
@@ -173,7 +165,25 @@ export class Frontload extends React.Component {
       : props.isServer
 
     if (this.isServer) {
-      this.queueIndex = getFrontloadQueuesForCurrentRender().push([]) - 1
+      if (props.context) {
+        if (!isValidContextProp(props.context)) {
+          throw new Error(
+            'For frontloadServerRender to work you must supply context as a prop to the ' +
+            '<Frontload /> provider in the passed render function\n\ne.g.\n\n' +
+            'const render = (dryRun, context) => (\n  renderToString(() => <Frontload context={context} />)\n)\n\n'
+          )
+        }
+
+        this.queueIndex = props.context.frontloadQueues.push([]) - 1
+      } else {
+        // check we're able to use automatic context injection before trying it as
+        // it's only supported on node 8.12.0 and above
+        if (IS_NODE_V_8_12_OR_ABOVE) {
+          this.queueIndex = getFrontloadQueuesForCurrentRender().push([]) - 1
+        } else {
+          throw mustUseManualContextError()
+        }
+      }
     }
 
     // hook for first ever render on client
@@ -197,6 +207,12 @@ export class Frontload extends React.Component {
   render () {
     return React.Children.only(this.props.children)
   }
+}
+
+function isValidContextProp (candidate) {
+  return candidate &&
+    candidate.frontloadQueues &&
+    candidate.frontloadQueues.constructor === Array
 }
 
 class FrontloadConnectedComponent extends React.Component {
@@ -236,58 +252,122 @@ export const frontloadConnect = (frontload, options = {}) => (component) => (pro
     options={options} />
 )
 
-if (IS_SERVER) {
-  initAsyncHooks()
+const map = (arr, fn) => {
+  const mapped = []
+  for (let i = 0; i < arr.length; i++) mapped.push(fn(arr[i], i))
+
+  return mapped
+}
+
+// util with same behaviour of Promise.all, except it does not short-circuit
+// to catch if one of the promises rejects. It resolves when all the passed promises
+// have either resolved or rejected
+const waitForAllToComplete = (promises) => (
+  Promise.all(map(promises, (promise) => (
+    promise['catch']((error) => error)
+  )))
+)
+
+function flushQueues (frontloadQueues, index, options = {}) {
+  const frontloadQueuesNotProvided = !frontloadQueues
+
+  if (frontloadQueuesNotProvided) {
+    frontloadQueues = getFrontloadQueuesForCurrentRender()
+  }
+
+  if (index === undefined) {
+    return Promise.all(
+      map(frontloadQueues, (_, i) => (
+        flushQueues(
+          frontloadQueuesNotProvided ? undefined : frontloadQueues,
+          i,
+          options
+        )
+      ))
+    )
+  }
+
+  const frontloadPromises = []
+  const queue = frontloadQueues[index]
+
+  for (let i = 0; i < queue.length; i++) {
+    const frontload = queue[i]
+    if (!options.firstClientRender) {
+      frontloadPromises.push(frontload.fn())
+    } else if (options.noServerRender || frontload.options.noServerRender) {
+      if (process.env.NODE_ENV !== 'production' && !!options.log) {
+        options.log(`[1st client render] NOTE running frontload fn for component [${frontload.componentDisplayName}], since noServerRender === true ${options.noServerRender ? 'globally' : 'for this component'}`)
+      }
+
+      frontloadPromises.push(frontload.fn())
+    }
+  }
+
+  frontloadQueues[index] = []
+
+  return waitForAllToComplete(frontloadPromises)
+}
+
+const doRender = (render, withLogging, frontloadQueues, asyncId) => {
+  const logAsyncId = asyncId ? `[${asyncId}] ` : ''
+
+  if (process.env.NODE_ENV !== 'production' && withLogging) {
+    log('frontloadServerRender info', logAsyncId + `running first render to fill frontload fn queue(s)`)
+  }
+
+  // a first render is required to fill the frontload queue(s) wth the frontload
+  // functions on the components in the subtrees under frontload containers that will be rendered
+  // The result of this first render is useless, and is thrown away, so there is more work than
+  // necessary done here. This could be improved, for example if a future version of react implements something like a
+  // rendering dry-run to walk the component tree without actually doing the render at the end
+  // the true flag here signals that this render is just a "dry-run"
+  render(true, { frontloadQueues })
+
+  if (process.env.NODE_ENV !== 'production' && withLogging) {
+    log('frontloadServerRender info', logAsyncId + `first render succeeded, frontend fn queue(s) filled`)
+    log('frontloadServerRender info', logAsyncId + `flushing frontend fn queue(s) before running second render...`)
+  }
+
+  const startFlushAt = withLogging && Date.now()
+
+  return flushQueues(frontloadQueues).then(() => {
+    if (process.env.NODE_ENV !== 'production' && withLogging) {
+      log('frontloadServerRender info', logAsyncId + `flushed frontload fn queue(s) in ${Date.now() - startFlushAt}ms`)
+      log('frontloadServerRender info', logAsyncId + `Running second render.`)
+    }
+
+    const output = render(false, { frontloadQueues })
+
+    if (process.env.NODE_ENV !== 'production' && withLogging) {
+      log('frontloadServerRender info', logAsyncId + `NOTE: as the logs show, the queue(s) are filled by Frontload before the second render, however they are NOT flushed, so the frontload fns DO NOT run twice.`)
+      log('frontloadServerRender info', logAsyncId + `second render succeeded. Server rendering is done.`)
+    }
+
+    delete FRONTLOAD_QUEUES[asyncId]
+
+    return output
+  })
 }
 
 export const frontloadServerRender = (render, withLogging) => {
-  // this is usually a no-op as async hooks have already been initialised
-  // if IS_SERVER is true, but for tests this won't be the case as jest
-  // provides a window object, so just do this for testing
-  // the production check will ensure gets removed from production builds anyway,
-  // so this while being a hack isn't actually that terrible
-  if (process.env.NODE_ENV !== 'production') {
-    initAsyncHooks()
+  initIsNodeVersion8Dot12OrAbove()
+
+  const usingManualContext = render.length >= 2
+
+  // try to check that the API is being used correctly if running node below v8.12.0
+  if (!usingManualContext) {
+    if (IS_NODE_V_8_12_OR_ABOVE) {
+      initAsyncHooks()
+    } else {
+      throw mustUseManualContextError()
+    }
   }
 
-  return withAsyncContext((asyncId) => {
-    FRONTLOAD_QUEUES[asyncId] = []
+  return usingManualContext
+    ? doRender(render, withLogging, [])
+    : withAsyncContext((asyncId) => {
+      FRONTLOAD_QUEUES[asyncId] = []
 
-    if (process.env.NODE_ENV !== 'production' && withLogging) {
-      log('frontloadServerRender info', `[${asyncId}] running first render to fill frontload fn queue(s)`)
-    }
-
-    // a first render is required to fill the frontload queue(s) wth the frontload
-    // functions on the components in the subtrees under frontload containers that will be rendered
-    // The result of this first render is useless, and is thrown away, so there is more work than
-    // necessary done here. This could be improved, for example if a future version of react implements something like a
-    // rendering dry-run to walk the component tree without actually doing the render at the end
-    // the true flag here signals that this render is just a "dry-run"
-    render(true)
-
-    if (process.env.NODE_ENV !== 'production' && withLogging) {
-      log('frontloadServerRender info', `[${asyncId}] first render succeeded, frontend fn queue(s) filled`)
-      log('frontloadServerRender info', `[${asyncId}] flushing frontend fn queue(s) before running second render...`)
-    }
-
-    const startFlushAt = withLogging && Date.now()
-
-    return flushQueues().then(() => {
-      if (process.env.NODE_ENV !== 'production' && withLogging) {
-        log('frontloadServerRender info', `[${asyncId}] flushed frontload fn queue(s) in ${Date.now() - startFlushAt}ms`)
-        log('frontloadServerRender info', `[${asyncId}] Running second render.`)
-      }
-
-      const output = render(false)
-
-      if (process.env.NODE_ENV !== 'production' && withLogging) {
-        log('frontloadServerRender info', `[${asyncId}] NOTE: as the logs show, the queue(s) are filled by Frontload before the second render, however they are NOT flushed, so the frontload fns DO NOT run twice.`)
-        log('frontloadServerRender info', `[${asyncId}] second render succeeded. Server rendering is done.`)
-      }
-
-      delete FRONTLOAD_QUEUES[asyncId]
-
-      return output
+      return doRender(render, withLogging, undefined, asyncId)
     })
-  })
 }
