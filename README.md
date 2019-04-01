@@ -4,11 +4,10 @@
 
 #### Load data asynchronously into your React components. Works on both client and server render.
 
-> A bug which caused issues with multiple server renders happening in parallel was fixed in v1.0.5. **Everyone using this library should upgrade immediately**! 
+> **Upgrade to v1.0.6 immediately, it contains an important bugfix**
 
-> It has the same API as previous versions, so will just work with your existing code, however it requires you have node version **8.12.0 or above** to work. 
+> v1.0.6 fixes a bug with parallel server renders. If you are running node @ v8.12.0+, upgrade to v1.0.6 and you are done, your existing code will just work. If you are running node below v0.8.12, you have to make a tiny change to your server render code. [Please see here](/docs/react-frontload-parallel-server-render-bugfix.md) for details.
 
-> If you have to run on a node version less than 8.12.0, support for that is being worked on and will come soon. As a workaround, you can in the meantime use v1.0.4, which has the same API that will be added again in a future version. See issues #23 and #27 for more detail on this.
 
 Client render                   | Server render
 :------------------------------:|:-----------------------------:
@@ -143,15 +142,16 @@ The react-frontload provider Component - it must be an ancestor of **all** compo
 #### frontloadServerRender
 
 ```js
-frontloadServerRender: (renderMarkup: (dryRun: boolean) => string)
+frontloadServerRender: (renderMarkup: (dryRun: boolean, context?: Object) => string)
 ```
 
 The `react-frontload` server render wrapper which **must** be used on the server to enable the synchronous data loading on server render that `react-frontload` provides. This is of course not needed if you are not using server rendering in your application.
 
 *Arguments*
 
-  * `renderMarkup: (dryRun: boolean) => string` This callback function acts as the glue between `react-frontload` and your existing server render logic, making async server rendering work. It should return exactly what normal server render code returns - in most cases the output of `ReactDom.renderToString`. This function injects an argument for lower-level integration with the render, for apps that need it:
+  * `renderMarkup: (dryRun: boolean, context?: Object) => string` This callback function acts as the glue between `react-frontload` and your existing server render logic, making async server rendering work. It should return exactly what normal server render code returns - in most cases the output of `ReactDom.renderToString`. This function injects an argument for lower-level integration with the render, for apps that need it:
     * `dryRun: boolean` This is a flag used to let you know when the 'final' server render is taking place. `react-frontload` actually runs the server render more than once, as part of its mechanic to make async server rendering work, and some libraries in the React excosystem are built with the assumption that server rendering only occurs once. For instance, `styled-components`, when it generates css on the server. For libraries such as these, you can use this flag to only run the server render parts when it is set `false`, i.e. on the final render.
+    * `context?: Object` The per-render context that frontload needs to make parallel server renders not interfere with each other. If you are using node @ v8.12.0 or above you do not need this, as it can be done automatically for you, but if you are using node below v8.12.0 you *must* pass through the `context` to the Frontload provider component (on the server only) like so: `(dryRun, context) => ( <Frontload context={context}>...</Frontload> )`. [See here for more details](/docs/react-frontload-parallel-server-render-bugfix.md).
 
 You can think of this function as injecting the logic required to make `react-frontload` synchronous data loading work, into your existing application. This is in line with the design goals of the library, i.e. there are no requirements about how your server render function works, and indeed it can work in a completely standard way. As long as it is wrapped with `frontloadServerRender`,  it will just work.
 
