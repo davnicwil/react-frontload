@@ -4,9 +4,9 @@
 
 #### Load data asynchronously into your React components. Works on both client and server render.
 
-> **Upgrade to v1.0.6 immediately, it contains an important bugfix**
+> **Important - upgrade to v1.0.6 immediately, it contains an important bugfix**
 
-> v1.0.6 fixes a bug with parallel server renders. If you are running node @ v8.12.0+, upgrade to v1.0.6 and you are done, your existing code will just work. If you are running node below v0.8.12, you have to make a tiny change to your server render code. [Please see here](/docs/react-frontload-parallel-server-render-bugfix.md) for details.
+> v1.0.6 fixes a bug with parallel server renders. If you are running node @ v8.12.0+, upgrade to v1.0.6 and you are done, your existing code will just work. If you are running node below v8.12.0, you have to make a tiny change to your server render code. [Please see here](/docs/react-frontload-parallel-server-render-bugfix.md) for details.
 
 
 Client render                   | Server render
