@@ -23,3 +23,5 @@ if (!isNodeVersion8Dot12OrAbove()) {
   console.log('\nThis means that some tests will fail, because automatic per-render context injection, which some tests rely on working to pass, is not supported below node v8.12.0')
   console.log('\n-----\n')
 }
+
+jest.setTimeout(20000)
