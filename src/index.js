@@ -269,22 +269,8 @@ const waitForAllToComplete = (promises) => (
 )
 
 function flushQueues (frontloadQueues, index, options = {}) {
-  const frontloadQueuesNotProvided = !frontloadQueues
-
-  if (frontloadQueuesNotProvided) {
-    frontloadQueues = getFrontloadQueuesForCurrentRender()
-  }
-
   if (index === undefined) {
-    return Promise.all(
-      map(frontloadQueues, (_, i) => (
-        flushQueues(
-          frontloadQueuesNotProvided ? undefined : frontloadQueues,
-          i,
-          options
-        )
-      ))
-    )
+    return Promise.all(map(frontloadQueues, (_, i) => flushQueues(frontloadQueues, i, options)))
   }
 
   const frontloadPromises = []
@@ -368,6 +354,6 @@ export const frontloadServerRender = (render, withLogging) => {
     : withAsyncContext((asyncId) => {
       FRONTLOAD_QUEUES[asyncId] = []
 
-      return doRender(render, withLogging, undefined, asyncId)
+      return doRender(render, withLogging, FRONTLOAD_QUEUES[asyncId], asyncId)
     })
 }

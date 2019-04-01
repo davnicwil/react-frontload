@@ -606,7 +606,7 @@ test('v0.0.2: Client render of <App /> with frontloads firing api calls based on
     })
 })
 
-test('server render in parallel (bugfix introduced in v1.0.5)', () => {
+test('v1.0.6: Server render of <App /> in parallel, with automatic per-render context injection (supported on node 8.12.0 and above)', () => {
   const testServerRender = async () => {
     let store = buildCleanStore()
 
@@ -632,7 +632,46 @@ test('server render in parallel (bugfix introduced in v1.0.5)', () => {
   }
 
   // this number must be large to rigorously verify that there aren't race conditions
-  const NUMBER_OF_PARALLEL_RENDERS = 1024
+  const NUMBER_OF_PARALLEL_RENDERS = 128
+  const runs = []
+
+  for (let i = 0; i < NUMBER_OF_PARALLEL_RENDERS; i++) {
+    runs[i] = testServerRender()
+  }
+
+  return Promise.all(runs)
+})
+
+test('v1.0.6: Server render of <App /> in parallel, with manual per-render context injection (supported on all versions of node)', () => {
+  const testServerRender = async () => {
+    let store = buildCleanStore()
+
+    // note - using manual context injection, passing the context arg from the render
+    // function through to the Frontload provider as a context prop
+    const App = (props) => (
+      <Frontload context={props.fronloadContext} isServer >
+        {/*  onlyRenderChildrenWhenDataLoaded prop means that children only load once Component1's frontload has resolved with data */}
+        <Component1 entityId='1' store={store} >
+          <Component3 entityId='2' store={store} />
+          <Component2 entityId='3' store={store} >
+            <Component3 entityId='4' store={store} />
+          </Component2>
+        </Component1>
+      </Frontload>
+    )
+
+    // note - using manual context injection arg in render callback
+    return frontloadServerRender((dryRun, context) => (
+      render(<App fronloadContext={context} />)
+    )).then((serverRenderedMarkup) => {
+      assertServerRenderedMarkupStructureIsAsExpected(serverRenderedMarkup)
+      assertStoreIsPopulated(store)
+      assertDataFromStoreIsRenderedOnServer(serverRenderedMarkup)
+    })
+  }
+
+  // this number must be large to rigorously verify that there aren't race conditions
+  const NUMBER_OF_PARALLEL_RENDERS = 128
   const runs = []
 
   for (let i = 0; i < NUMBER_OF_PARALLEL_RENDERS; i++) {
