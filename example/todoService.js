@@ -1,5 +1,5 @@
 // the mock time this 'service' takes to respond
-const MOCK_LATENCY_MS = 2000
+const MOCK_LATENCY_MS = 1000
 
 const TODOS = [{
   id: '001',

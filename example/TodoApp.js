@@ -9,12 +9,19 @@ import {
 import { Frontload } from '../src'
 import TodosPage from './TodosPage'
 import TodoPage from './TodoPage'
+import NestedComponentsPage from './NestedComponentsPage'
 import StateManager from './StateManager'
 import Layout from './Layout'
 
 const Routes = ({ stateManager }) => (
   <Layout>
     <Switch>
+      <Route
+        path='/server-render/nested-components'
+        exact
+        render={() => <NestedComponentsPage.ServerRender stateManager={stateManager} todoId='001' />}
+      />
+
       <Route
         path='/server-render/:id?'
         render={(props) => {
@@ -24,6 +31,12 @@ const Routes = ({ stateManager }) => (
             ? <TodoPage.ServerRender stateManager={stateManager} todoId={id} />
             : <TodosPage.ServerRender stateManager={stateManager} />
         }}
+      />
+
+      <Route
+        path='/no-server-render/nested-components'
+        exact
+        render={() => <NestedComponentsPage.NoServerRender stateManager={stateManager} todoId='001' />}
       />
 
       <Route

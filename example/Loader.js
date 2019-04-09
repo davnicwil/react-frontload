@@ -57,7 +57,10 @@ const Text = styled.div`
 
 const Loader = (props) => (
   <Container {...props}>
-    <Text>{props.text}</Text>
+    {props.text &&
+      <Text>{props.text}</Text>
+    }
+
     <Ripple />
   </Container>
 )

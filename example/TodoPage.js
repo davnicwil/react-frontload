@@ -5,7 +5,7 @@ import Todo from './Todo'
 import Loader from './Loader'
 
 const Presentation = (props) => {
-  const todo = props.stateManager.get().todo
+  const todo = props.stateManager.get().todo[props.todoId]
 
   return (
     <div>
@@ -21,7 +21,8 @@ const frontload = (props) =>
   todoClient
     .get(props.todoId)
     .then((todo) => {
-      props.stateManager.set('todo', todo)
+      const currentTodoValue = props.stateManager.get().todo
+      props.stateManager.set('todo', { ...currentTodoValue, [props.todoId]: todo })
     })
 
 const ServerRender = frontloadConnect(
