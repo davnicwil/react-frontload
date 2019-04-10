@@ -4,7 +4,7 @@
 
 > **Important - please upgrade to v1.0.7**
 
-> In the last 2 weeks there have been a few releases and a bit of API churn, because of iterations on a bugfix for parallel server renders. With v1.0.7, the bug was fixed without any need for an API change from 1.0.3. **Therefore, everyone should upgrade to v1.0.7**. Specifically, versions 1.0.4 - 1.0.6 and the API changes they introduced are now deprecated.
+> In the last 2 weeks there have been a few releases and a bit of API churn, because of iterations on a bugfix for parallel server renders. With v1.0.7, the bug was fixed without any need for an API change from v1.0.3. **Therefore, everyone should upgrade to v1.0.7**. v1.0.4 - v1.0.6 and the API changes they introduced are now deprecated.
 
 #### Async data loading for React components. Works on client & server render.
 
