@@ -35,8 +35,10 @@ const MyFrontloadComponentPresentation = (props) => (
   <div>{props.data ? `Loaded: ${props.data}` : 'Loading...'}</div>
 )
 
-// the function which loads data into the component
-// returns a Promise that resolves when all data is loaded
+// the function which loads data into the component - returns an EMPTY Promise 
+// that resolves when all data is loaded - frontload does NOT pass through any
+// props to the component, it's just responsible for data loading - you should 
+// use a state manager to handle connecting state to your component
 const frontloadFunction = async (props) => {
   const data = await api.loadData()
   props.stateManager.updateState(data) // e.g. redux dispatch
@@ -74,10 +76,9 @@ render(<App />, document.getElementById('root'))
 import { renderToString } from 'react-dom/server'
 import { frontloadServerRender } from 'react-frontload'
 
-// notice that server render is NOT synchronous!
-// with react-frontload it's async. The frontloadServerRender wrapper ensures
-// that each frontload component in App has loaded its data before
-// before the final markup is rendered
+// notice that server render is asynchronous!
+// The frontloadServerRender wrapper ensures that each frontload component in 
+// App has loaded its data before before the final markup is rendered
 const serverRender = async () => {
   const reactRenderedMarkup = await frontloadServerRender(() => (
     renderToString(<App />
