@@ -81,8 +81,8 @@ import { frontloadServerRender } from 'react-frontload'
 // App has loaded its data before before the final markup is rendered
 const serverRender = async () => {
   const reactRenderedMarkup = await frontloadServerRender(() => (
-    renderToString(<App />
-  )))
+    renderToString(<App />)
+  ))
 
   return putIntoHtmlDocument(reactRenderedMarkup)
 }
