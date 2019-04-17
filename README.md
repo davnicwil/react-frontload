@@ -12,7 +12,7 @@ Client render                   | Server render
 
 ---
 
-* [Quick example](#quick-code-example)
+* [Quick example](#quick-example)
 * [What problem does this solve?](#what-problem-does-this-solve)
 * [API reference](#api-reference)
 
@@ -118,15 +118,17 @@ some time later api.loadData() finishes, final markup is then rendered, server r
 
 In most React applications, you need to load data from an API and dynamically render components based on that data.
 
-This is simple to implement on the client with the built-in React lifecycle methods. However when you need to server render components with the same data pre-loaded, things become more difficult because React does not ([yet](https://github.com/facebook/react/issues/1739)) support asynchronous render. This means you can't wait on anything async running in lifecycle methods before the first render happens, so on the server you can't reuse your data loading logic written inside lifecycle methods.
+This is easy to do on the client by loading data in lifecycle hooks like `componentDidMount` `componentDidUpdate` etc, and waiting until it's loaded to render. Client rendering lends itself well to async because the component is like a state machine that sits there indefinitely. You can spin off loading data, and just update the props whenever the loading is done.
 
-Patterns exist for writing data loading functions and binding them to components, for running via separate mechanisms on client and server render, but they involve doing things like hoisting data loading logic from all components under a route to the parent component of the route. It's a lot of manual wiring and the data loading logic often ends up quite far away from where the data is used.
+On the server things are trickier because the component is more like a pure function. A run-once, props in, markup out, synchronous function. There's [no built-in way](https://github.com/facebook/react/issues/1739) to wait around for async data loading to happen once render begins.
 
-`react-frontload` solves the problem. You just write a function to load your component's data, and provide it to your component via a HOC (Higher Order Component). That same code works on both client and server renders - `react-frontload` takes care of all the details, including things that are tricky to wire up manually such as NOT reloading data immediately on the client after a server render.
+Patterns exist for running data loading functions via *separate mechanisms* on client and server render, for instance doing things like hoisting data loading logic from all components under a route to the parent component of the route, then pulling that function off the route and running it every time the route matches, before running the render. This works but it's a lot of manual wiring, data loading logic often ends up quite far away from the components where the data is used, and there are lots of hidden problems like how do you ensure data loading isn't rerun wastefully on first client render after a server render?
 
-For super fine-grained contorl on the client, you can manually configure if data reloads on component mounts and/or updates, with a simple declarative configuration on the component.
+Wouldn't it be great to have an abstraction that acts a bit like an async component hook, that runs any async data loading logic you need before the component renders on both client and server? 
 
-The design philosophy of the library is that it is both 'Just React' and 'Just Javascript'. It plugs into your existing application via `props`, `Promises`, and wrapping with the `Frontload` provider and the `reactServerRender` function. It requires no special conventions or interfaces and should just work out the box with your existing app, which can use any stack within the React ecosystem.
+`react-frontload` provides that abstraction. You write your data loading function, bind it to the component via a Higher Order Component, wrap your application in the `Frontload` provider, wrap your server render function in `frontloadServerRender`, and it just works. On the server, your data loading runs before render. On the client, you can easily control if the data loading runs on mounts and updates, via a simple declaritive config passed to the HOC.
+
+The design philosophy of `react-frontload` is 'Just React' and 'Just Javascript'. Unlike other data-loading patterns, it requires no special conventions or dependencies and just works out the box with any app using any stack from the React ecosystem. It requires no architectural changes to your app or your API. Just plug it in, and it works.
 
 #### It's still unclear / I'm not convinced
 
