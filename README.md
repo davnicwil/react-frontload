@@ -2,11 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/react-frontload.svg?style=flat)](https://www.npmjs.com/package/react-frontload) [![Build Status](https://travis-ci.org/davnicwil/react-frontload.svg?branch=master)](https://travis-ci.org/davnicwil/react-frontload) ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
-> **Important - please upgrade to v1.0.7**
-
-> In the last 2 weeks there have been a few releases and a bit of API churn, because of iterations on a bugfix for parallel server renders. With v1.0.7, the bug was fixed without any need for an API change from v1.0.3. **Therefore, everyone should upgrade to v1.0.7**. v1.0.4 - v1.0.6 and the API changes they introduced are now deprecated.
-
-#### Async data loading for React components. Works on client & server render.
+#### Async data loading for React components, on client & server.
 
 Client render                   | Server render
 :------------------------------:|:-----------------------------:
