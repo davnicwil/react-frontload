@@ -27,7 +27,7 @@ import {
 import { connectStateManager } from 'any-state-manager' // e.g. redux, mobx etc
 
 // the presentation for the component, displaying the data
-// when it's present and 'loading' until then
+// when it's loaded and 'loading' until then
 const MyFrontloadComponentPresentation = (props) => (
   <div>{props.data ? `Loaded: ${props.data}` : 'Loading...'}</div>
 )
@@ -45,7 +45,7 @@ const frontloadFunction = async (props) => {
 // to make it a frontload component
 const MyFrontloadComponent =
   connectStateManager( // e.g. redux connect
-  frontloadConnect(frontloadFunction)( // use the data loading fucntion above
+  frontloadConnect(frontloadFunction)( // use the data loading function above
     MyFrontloadComponentPresentation
   ))
 
