@@ -174,7 +174,7 @@ This is the Higher Order Component which connects react-frontload and the Compon
 
   * `onMount: boolean [default true]` Toggles whether or not the frontload function should fire when the Component mounts on the client.
 
-  * `onUpdate: boolean [default true]` Toggles whether or not the frontload function should fire when the Component’s props update on the client.
+  * `onUpdate: boolean [default false]` Toggles whether or not the frontload function should fire when the Component’s props update on the client.
 
 . . . . . . . . . .
 
