@@ -156,7 +156,7 @@ frontloadConnect(
   options?: { // frontload options
     noServerRender: boolean [default false],
     onMount: boolean [default true],
-    onUpdate: boolean [default true]
+    onUpdate: boolean [default false]
   }
 )(Component: React$Component)
 ```
