@@ -170,7 +170,20 @@ class FrontloadConnectedComponent extends React.Component {
     }
   }
 
-  pushFrontload = (lifecyclePhase, isServer) => () => {
+  pushFrontload = (lifecyclePhase, isServer) => (prevProps) => {
+    if (lifecyclePhase === LIFECYCLE_PHASES.UPDATE) {
+      const { _experimental_updateFunc } = this.props.options
+      if (
+        _experimental_updateFunc &&
+        !_experimental_updateFunc(
+          prevProps.componentProps,
+          this.props.componentProps,
+        )
+      ) {
+        return
+      }
+    }
+
     const logMessage =
       process.env.NODE_ENV !== 'production'
         ? null
