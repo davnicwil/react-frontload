@@ -1,12 +1,12 @@
 {
   "name": "react-frontload",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "description": "Bind Async Data Dependencies to React Components",
   "main": "./lib/index.js",
   "scripts": {
     "build": "npm run test && npx --no-install babel src -d lib",
     "test": "jest",
-    "prepare": "npm run build",
+    "prepublishOnly": "npm run build",
     "example:build-client": "npx --no-install webpack --config ./example/webpack/webpack.config.client.js",
     "example:build-server": "npx --no-install webpack --config ./example/webpack/webpack.config.server.js",
     "example": "npm i && npm run example:build-client && npm run example:build-server && node ./example/build/server.bundle.js;"

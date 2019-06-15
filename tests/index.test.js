@@ -168,8 +168,13 @@ const frontloads = {
     MockApi.getC(props.entityId, props.mockRestrictedEntity, props.log)
       .then(addEntityToStore(props.store, 'c'))
       .catch(addEntityFailedToLoadToStore(props.store, 'c', props.entityId))
+  ),
+  throwsError: () => (
+    Promise.reject(new Error(ERROR_COMPONENT_FRONTLOAD_ERROR_MESSAGE))
   )
 }
+
+const ERROR_COMPONENT_FRONTLOAD_ERROR_MESSAGE = 'Expected test error in frontload for ErrorComponent'
 
 const Component1 = frontloadConnect(frontloads.component1, { onMount: true, onUpdate: true })((props) => (
   <Parent value={props.store.a[props.entityId]}>
@@ -204,6 +209,14 @@ const Component3WithFrontloadOnlyFiringOnMount = frontloadConnect(frontloads.com
 
 const Component3WithNoServerRender = frontloadConnect(frontloads.component3, { noServerRender: true })((props) => (
   <Leaf value={props.store.c[props.entityId]} />
+))
+
+// A component that throws an error in its frontload
+// Used to test error handling
+const ErrorComponent = frontloadConnect(frontloads.throwsError, { onMount: true, onUpdate: true })((props) => (
+  props.data // this doesn't ever exist - the frontload is just hard coded to error - but just to show what might happen if there were no error
+    ? <div>{props.children}</div>
+    : <div className="data-loading-error">There was an error loading the data</div>
 ))
 
 const assertDomStructureIsAsExpected = (rendered) => {
@@ -951,6 +964,110 @@ describe('v1.0.7 and above features', () => {
         expect(serverRenderedMarkup.find('div.leaf').eq(1).text()).toBe('loading...') // second level of nesting, data not loaded so still in loading state
         expect(serverRenderedMarkup.find('div.leaf').eq(2).text()).toBe('loading...')
         expect(serverRenderedMarkup.find('div.leaf').eq(3).text()).toBe('loading...')
+      })
+    })
+  })
+})
+
+describe('v1.1.0 and above features', () => {
+  describe('server render', () => {
+    test('with Error in render, and continueRenderingOnError set false by default', () => {
+      let store = buildCleanStore()
+
+      const App = () => (
+        <Frontload isServer >
+          {/*  onlyRenderChildrenWhenDataLoaded prop means that children only load once Component1's frontload has resolved with data */}
+          <Component1 entityId='1' store={store} >
+            <ErrorComponent>
+              {/* only renders if there is no error - which there always is */}
+              <Component3 entityId='2' store={store} />
+            </ErrorComponent>
+          </Component1>
+        </Frontload>
+      )
+
+      let errorThrown = false
+
+      const result = frontloadServerRender((dryRun) => (
+        render(<App />)
+      )).catch((err) => {
+        errorThrown = err.message === ERROR_COMPONENT_FRONTLOAD_ERROR_MESSAGE
+      })
+
+      return result.then(() => {
+        expect(errorThrown).toBe(true)
+      })
+    })
+
+    test('with Error in render, and continueRenderingOnError set false', () => {
+      let store = buildCleanStore()
+
+      const App = () => (
+        <Frontload isServer >
+          {/*  onlyRenderChildrenWhenDataLoaded prop means that children only load once Component1's frontload has resolved with data */}
+          <Component1 entityId='1' store={store} >
+            <ErrorComponent>
+              {/* only renders if there is no error - which there always is */}
+              <Component3 entityId='2' store={store} />
+            </ErrorComponent>
+          </Component1>
+        </Frontload>
+      )
+
+      let errorThrown = false
+
+      const result = frontloadServerRender((dryRun) => (
+        render(<App />)
+      ), {
+        continueRenderingOnError: false // set false explictly (it's false by default) and test it still works the same way
+      }).catch((err) => {
+        errorThrown = err.message === ERROR_COMPONENT_FRONTLOAD_ERROR_MESSAGE
+      })
+
+      return result.then(() => {
+        expect(errorThrown).toBe(true)
+      })
+    })
+
+    test('with Error in render, and continueRenderingOnError set true', () => {
+      let store = buildCleanStore()
+
+      const App = () => (
+        <Frontload isServer >
+          {/*  onlyRenderChildrenWhenDataLoaded prop means that children only load once Component1's frontload has resolved with data */}
+          <Component1 entityId='1' store={store} >
+            <ErrorComponent>
+              {/* only renders if there is no error - which there always is */}
+              <Component3 entityId='2' store={store} />
+            </ErrorComponent>
+          </Component1>
+        </Frontload>
+      )
+
+      let errorThrown = false
+
+      const result = frontloadServerRender((dryRun) => (
+        render(<App />)
+      ), {
+        continueRenderingOnError: true
+      }).then((serverRenderedMarkup) => {
+        // assert that despite the error, the rest of the markup
+        // around the ErrorComponent is still rendered
+        // because continueRenderingOnError is set true
+        expect(serverRenderedMarkup.find('div.parent')).toHaveLength(1)
+        expect(serverRenderedMarkup.find('div.leaf')).toHaveLength(1) // Component3, inside ErrorComponent, is never rendered, so only the leaft div inside component 1 is rendered. Otherwise there would be 2
+        expect(serverRenderedMarkup.find('div.data-loading-error')).toHaveLength(1) // The error message in ErrorComponent is rendered instead, because of the error in the frontload
+      }).catch((err) => {
+        // this should never be reached, because frontloadServerRender does not throw
+        // any rendering errors when continueRenderingOnError is set true
+        errorThrown = err.message === ERROR_COMPONENT_FRONTLOAD_ERROR_MESSAGE
+      })
+
+      return result.then(() => {
+        // assert that the error thrown by the ErrorComponent frontload function
+        // is swallowed - i.e. frontloadServerRender does not throw, when
+        // continueRenderingOnError is set true
+        expect(errorThrown).toBe(false)
       })
     })
   })

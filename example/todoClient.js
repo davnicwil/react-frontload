@@ -10,7 +10,9 @@ export const getAll = async () => {
 
   return res.status === 200
     ? res.json()
-    : Promise.reject(new Error(`Error fetching ${url}: status code ${res.status}`))
+    : Promise.reject(
+        new Error(`Error fetching ${url}: status code ${res.status}`),
+      )
 }
 
 export const get = async (todoId) => {
@@ -19,5 +21,7 @@ export const get = async (todoId) => {
 
   return res.status === 200
     ? res.json()
-    : Promise.reject(new Error(`Error fetching ${url}: status code ${res.status}`))
+    : Promise.reject(
+        new Error(`Error fetching ${url}: status code ${res.status}`),
+      )
 }

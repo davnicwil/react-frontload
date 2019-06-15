@@ -17,8 +17,11 @@ const LIFECYCLE_PHASES = {
 
 const log =
   process.env.NODE_ENV !== 'production' &&
-  ((name, message) => {
-    console.log(`[react-frontload]${name ? ` [${name}]` : ''} ${message}`)
+  ((name, message, ...args) => {
+    console.log(
+      `[react-frontload]${name ? ` [${name}]` : ''} ${message}`,
+      ...args,
+    )
   })
 
 const map = (arr, fn) => {
@@ -34,8 +37,32 @@ const map = (arr, fn) => {
 // util with same behaviour of Promise.all, except it does not short-circuit
 // to catch if one of the promises rejects. It resolves when all the passed promises
 // have either resolved or rejected
-const waitForAllToComplete = (promises) =>
-  Promise.all(map(promises, (promise) => promise['catch']((error) => error)))
+function waitForAllToComplete(
+  promises,
+  { withLogging, continueRenderingOnError },
+) {
+  let firstError
+
+  return Promise.all(
+    map(promises, (promise) =>
+      promise['catch']((error) => {
+        if (!firstError) {
+          firstError = error
+        }
+
+        if (withLogging) {
+          log('frontloadServerRender info', `ERROR:`, error)
+        }
+
+        return error
+      }),
+    ),
+  ).then(() => {
+    if (continueRenderingOnError !== true && firstError) {
+      throw firstError
+    }
+  })
+}
 
 export class Frontload extends React.Component {
   static childContextTypes = {
@@ -163,14 +190,14 @@ class FrontloadConnectedComponent extends React.Component {
     super(props, context)
 
     if (context.frontload.isServer) {
-      this.componentWillMount = this.pushFrontload(LIFECYCLE_PHASES.MOUNT, true)
+      this.componentWillMount = this.pushFrontload(LIFECYCLE_PHASES.MOUNT)
     } else {
       this.componentDidMount = this.pushFrontload(LIFECYCLE_PHASES.MOUNT)
       this.componentDidUpdate = this.pushFrontload(LIFECYCLE_PHASES.UPDATE)
     }
   }
 
-  pushFrontload = (lifecyclePhase, isServer) => (prevProps) => {
+  pushFrontload = (lifecyclePhase) => (prevProps) => {
     if (lifecyclePhase === LIFECYCLE_PHASES.UPDATE) {
       const { _experimental_updateFunc } = this.props.options
       if (
@@ -230,8 +257,11 @@ function dryRunRender(renderFunction) {
   return frontloadsFromRender
 }
 
-function runAllFrontloads(frontloads) {
-  return waitForAllToComplete(map(frontloads, (frontload) => frontload.fn()))
+function runAllFrontloads(frontloads, options) {
+  return waitForAllToComplete(
+    map(frontloads, (frontload) => frontload.fn()),
+    options,
+  )
 }
 
 function finalRender(renderFunction) {
@@ -248,7 +278,7 @@ function finalRender(renderFunction) {
 
 function frontloadServerRenderWorker(
   render,
-  { withLogging, maxNestedFrontloadComponents },
+  { withLogging, maxNestedFrontloadComponents, continueRenderingOnError },
   renderNumber = 1,
   frontloadsInLastRender = 0,
 ) {
@@ -307,7 +337,10 @@ function frontloadServerRenderWorker(
   const startRunAllFrontloadsAt = withLogging && Date.now()
 
   // if there are new frontloads from this render pass, run them all, then do another render pass
-  return runAllFrontloads(frontloadsFromRender).then(() => {
+  return runAllFrontloads(frontloadsFromRender, {
+    withLogging,
+    continueRenderingOnError,
+  }).then(() => {
     if (process.env.NODE_ENV !== 'production' && withLogging) {
       log(
         'frontloadServerRender info',
@@ -363,7 +396,7 @@ function frontloadServerRenderWorker(
     // do a recursive call to do another render pass if the configured max is not yet exceeded
     return frontloadServerRenderWorker(
       render,
-      { withLogging, maxNestedFrontloadComponents },
+      { withLogging, maxNestedFrontloadComponents, continueRenderingOnError },
       renderNumber + 1,
       frontloadsInThisRender,
     )
