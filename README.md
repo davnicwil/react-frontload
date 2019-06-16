@@ -32,9 +32,9 @@ const MyFrontloadComponentPresentation = (props) => (
   <div>{props.data ? `Loaded: ${props.data}` : 'Loading...'}</div>
 )
 
-// the function which loads data into the component - returns an EMPTY Promise 
+// the function which loads data into the component - returns an EMPTY Promise
 // that resolves when all data is loaded - frontload does NOT pass through any
-// props to the component, it's just responsible for data loading - you should 
+// props to the component, it's just responsible for data loading - you should
 // use a state manager to handle connecting state to your component
 const frontloadFunction = async (props) => {
   const data = await api.loadData()
@@ -74,7 +74,7 @@ import { renderToString } from 'react-dom/server'
 import { frontloadServerRender } from 'react-frontload'
 
 // notice that server render is asynchronous!
-// The frontloadServerRender wrapper ensures that each frontload component in 
+// The frontloadServerRender wrapper ensures that each frontload component in
 // App has loaded its data before before the final markup is rendered
 const serverRender = async () => {
   const reactRenderedMarkup = await frontloadServerRender(() => (
@@ -125,7 +125,7 @@ On the server things are trickier because the component is more like a pure func
 
 Patterns exist for running data loading functions via *separate mechanisms* on client and server render, for instance doing things like hoisting data loading logic from all components under a route to the parent component of the route, then pulling that function off the route and running it every time the route matches, before running the render. This works but it's a lot of manual wiring, data loading logic often ends up quite far away from the components where the data is used, and there are lots of hidden problems like how do you ensure data loading isn't rerun wastefully on first client render after a server render?
 
-Wouldn't it be great to have an abstraction that acts a bit like an async component hook, that runs any async data loading logic you need before the component renders on both client and server? 
+Wouldn't it be great to have an abstraction that acts a bit like an async component hook, that runs any async data loading logic you need before the component renders on both client and server?
 
 `react-frontload` provides that abstraction. You write your data loading function, bind it to the component via a Higher Order Component, wrap your application in the `Frontload` provider, wrap your server render function in `frontloadServerRender`, and it just works. On the server, your data loading runs before render. On the client, you can easily control if the data loading runs on mounts and updates, via a simple declaritive config passed to the HOC.
 
@@ -156,7 +156,11 @@ frontloadConnect(
   options?: { // frontload options
     noServerRender: boolean [default false],
     onMount: boolean [default true],
-    onUpdate: boolean [default false]
+    onUpdate: boolean [default false],
+
+    // Experimental options - used to try out new ideas in the wild
+    // should be considered unstable and subject to change or even removal
+    _experimental_updateFunc: (prevProps: Object, newProps: Object) => boolean,
   }
 )(Component: React$Component)
 ```
@@ -175,6 +179,8 @@ This is the Higher Order Component which connects react-frontload and the Compon
   * `onMount: boolean [default true]` Toggles whether or not the frontload function should fire when the Component mounts on the client.
 
   * `onUpdate: boolean [default false]` Toggles whether or not the frontload function should fire when the Component’s props update on the client.
+
+  * `_experimental_updateFunc: (prevProps: Object, newProps: Object) => boolean` Experimental option. Should be considered unstable. For use in conjunction with `onUpdate` to control *when* the frontload should fire on updates. Similar in concept to the `shouldComponentUpdate` React lifecycle hook. For example, you might want to specify that the frontload should fire on an update only when certain props change. If the fronload should fire, return true, otherwise return false.
 
 . . . . . . . . . .
 
@@ -199,7 +205,8 @@ The react-frontload provider Component - it must be an ancestor of **all** compo
 frontloadServerRender: (
   renderMarkup: (dryRun?: boolean) => string,
   options?: {
-    maxNestedFrontloadComponents: number [default 1]
+    maxNestedFrontloadComponents: number [default 1],
+    continueRenderingOnError: boolean [default false],
   }
 )
 ```
@@ -212,6 +219,7 @@ The `react-frontload` server render wrapper which **must** be used on the server
     * `dryRun?: boolean` Used for low-level integration with `react-frontload` server render. Under the hood, `frontloadServerRender` is actually running the `renderMarkup` function twice. It runs the first time to run the `frontload` functions for all components included in the render, then a second time to render the final markup once all data has been loaded into state. As React renders are supposed to pure this usually does not create any issues, but in some applications server renders also include logic, typically from styling libraries etc, that must only be called once per render. This boolean is therefore passed to let your `renderMarkup` function know which type of server render is occuring, so that you can decide to only call such logic once on the second and final server render, for instance.
   * options:
     * `maxNestedFrontloadComponents: number [default 1]` The maximum levels of 'nested' frontload components that will render on the server. The term 'nested' here has a very specific meaning: it's a frontload component that is rendered as a child of another frontload component, conditionally, based on data loaded by the parent. Nested frontload components present a particular challenge with server rendering because each level must load in serial, and cannot load in parallel. On the client, this is less relevant because the successive levels render incrementally, but on the server we have to wait for *all* levels to render before returning anything. If there are many levels of nesting, this may result in long render times and poor UX. Where possible, nesting should be avoided and by default react-frontload only allows 1 level of nesting. This option allows you to increase that to accomodate nesting of frontload components in your app if this is unavoidable. Note that if your app contains more levels of nested frontload components than this limit allows, the server render will still work, but the rendered markup will simply show any levels beyond the max in their loading state, and these 'loading' components' frontload functions will *not* automatically fire on the client unless `noServerRender` is set `true` for those components (see `noServerRender` docs for more information), therefore the server render will produce something but will likely appear slightly broken to the user. This is by design, so that you can spot where your application breaks the configured limit, whilst not completely breaking server render. If this happens it may simply be a bug, or you may have to change your design to have fewer levels of nesting, or of course you may just up the limit.
+    * `continueRenderingOnError: boolean [default false]` If any frontload function throws an Error, swallow it and just carry on rendering. The default is false, meaning the first encountered Error will be thrown by `frontloadServerRender`, so that it can be caught and handled (perhaps by responding with an error page).
 
 You can think of this function as injecting the logic required to make `react-frontload` synchronous data loading work, into your existing application. This is in line with the design goals of the library, i.e. there are no requirements about how your server render function works, and indeed it can work in a completely standard way. As long as it is wrapped with `frontloadServerRender`, it will just work.
 
