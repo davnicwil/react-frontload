@@ -12,7 +12,11 @@ Client render                   | Server render
 :point_up: The [example application](/docs/react-frontload-example-application.md) using **react-frontload** to load data
 
 ---
+> [Watch my talk](https://www.youtube.com/watch?v=LwhKU1OM1DY) on `react-frontload` at React Edinburgh.
+>
+> It goes into the problem with async data loading in React, and how `react-frontload` solves it.
 
+---
 * [Quick example](#quick-example)
 * [What problem does this solve?](#what-problem-does-this-solve)
 * [API reference](#api-reference)
