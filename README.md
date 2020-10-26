@@ -1,22 +1,17 @@
-# :arrows_counterclockwise: React Frontload
-### Async data loading for React components, on client & server.
+## React Frontload `v1.x`
 
-[![npm version](https://img.shields.io/npm/v/react-frontload.svg?style=flat)](https://www.npmjs.com/package/react-frontload) [![Build Status](https://travis-ci.org/davnicwil/react-frontload.svg?branch=master)](https://travis-ci.org/davnicwil/react-frontload) ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg) ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
-
-
-
-Client render                   | Server render
-:------------------------------:|:-----------------------------:
-![](/docs/no-server-render.gif) |![](/docs/server-render.gif)
-
-:point_up: The [example application](/docs/react-frontload-example-application.md) using **react-frontload** to load data
-
----
-> [Watch my talk](https://www.youtube.com/watch?v=LwhKU1OM1DY) on `react-frontload` at React Edinburgh.
+> **Important**
 >
-> It goes into the problem with async data loading in React, and how `react-frontload` solves it.
+> This documentation is for version **1.x**, the [latest version](https://github.com/davnicwil/react-frontload) is **2.x**
+>
+> The two versions are quite different in their approaches and APIs. Both have the same goal of simple full-stack data loading in React components, but **1.x** provides a general toolkit and **2.x** provides a more opinionated but batteries-included solution.
+>
+> Importantly, **1.x** is *not considered deprecated*, rather a *stable* and *feature complete* solution. It's used in hundereds of projects with tens of thousands of downloads per week. It will get indefinite support and bugfixes, though has had no bugs reported in over a year.
+>
+> If you decide the approach and API of **1.x** is more appropriate for you than that of **2.x**, you should use it! The approaches are different, but both are valid.
 
----
+## Docs
+
 * [Quick example](#quick-example)
 * [What problem does this solve?](#what-problem-does-this-solve)
 * [API reference](#api-reference)
