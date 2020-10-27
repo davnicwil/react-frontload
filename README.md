@@ -6,7 +6,7 @@
 >
 > The two versions are quite different in their approaches and APIs. Both have the same goal of simple full-stack data loading in React components, but **1.x** provides a general toolkit and **2.x** provides a more opinionated but batteries-included solution.
 >
-> Importantly, **1.x** is *not considered deprecated*, rather a *stable* and *feature complete* solution. It's used in hundereds of projects with tens of thousands of downloads per month. It will get indefinite support and bugfixes, though has had no bugs reported in over a year.
+> Importantly, **1.x** is *not considered deprecated*, rather a *stable* and *feature complete* solution. It's used in hundreds of projects with tens of thousands of downloads per month. It will get indefinite support and bugfixes, though has had no bugs reported in over a year.
 >
 > If you decide the approach and API of **1.x** is more appropriate for you than that of **2.x**, you should use it! The approaches are different, but both are valid.
 
