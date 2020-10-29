@@ -1,7 +1,7 @@
 
 
 <p align="center">
-  <img src="/react-frontload.png" alt="React Frontload" width="577" height="111">
+  <img src="/react-frontload.png" alt="React Frontload" width="577">
 </p>
 
 <h3 align="center">Simple full-stack data loading for React</h3>
