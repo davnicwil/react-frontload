@@ -10,6 +10,7 @@ type FrontloadMeta = {
   pending: boolean
   done: boolean
   error: any
+  errorObject: any
 }
 
 export type FrontloadProps<T> = {
@@ -191,6 +192,7 @@ class FrontloadStatePrivate {
         errors[key] = data.error
         this.serverRender.cache[key] = {
           _____FRONTLOAD_____isServerRenderError: true,
+          _____FRONTLOAD_____errorObject: data.error,
         }
       } else {
         this.serverRender.cache[key] = data
@@ -414,6 +416,7 @@ export function useFrontload<T>(
     ? frontloadState.getFrontloadServerRenderedData(key)
     : undefined
   const error = !!data?._____FRONTLOAD_____isServerRenderError
+  const errorObject = error && data._____FRONTLOAD_____errorObject
 
   const [state, setState] = React.useState<{
     data: T
@@ -425,6 +428,7 @@ export function useFrontload<T>(
       pending: pendingInitial,
       done: !pendingInitial,
       error,
+      errorObject,
     },
   })
 
