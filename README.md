@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://davidnicholawilliams.com/react-frontload">View documentation</a>
+  <a href="https://davidnicholaswilliams.com/react-frontload">View documentation</a>
 </p>
 
 
