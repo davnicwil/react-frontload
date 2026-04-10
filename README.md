@@ -14,12 +14,12 @@
   <img src="https://img.shields.io/npm/dm/react-frontload?style=flat-square">
 
   <a href="https://twitter.com/davnicwil">
-    <img src="https://img.shields.io/twitter/url?label=made%20by%20%40davnicwil&style=social&url=https%3A%2F%2Fdavnicwil.com" />
+    <img src="https://img.shields.io/twitter/url?label=made%20by%20%40davnicwil&style=social&url=https%3A%2F%2Fdavidnicholaswilliams.com" />
   </a>
 </p>
 
 <p align="center">
-  <a href="https://davnicwil.com/react-frontload">View documentation</a>
+  <a href="https://davidnicholawilliams.com/react-frontload">View documentation</a>
 </p>
 
 
@@ -28,7 +28,7 @@
 A library to load & manage data inline in React components that works on client and server.
 
 - **Installation** — `npm install react-frontload`
-- **Documentation** — [view here](https://davnicwil.com/react-frontload)
+- **Documentation** — [view here](https://davidnicholaswilliams.com/react-frontload)
 
 <br />
 
